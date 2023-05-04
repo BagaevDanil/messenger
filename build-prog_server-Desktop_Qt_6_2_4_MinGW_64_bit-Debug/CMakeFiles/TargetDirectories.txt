@@ -1,0 +1,5 @@
+C:/Users/Danil/github/messenger/build-prog_server-Desktop_Qt_6_2_4_MinGW_64_bit-Debug/CMakeFiles/prog_server.dir
+C:/Users/Danil/github/messenger/build-prog_server-Desktop_Qt_6_2_4_MinGW_64_bit-Debug/CMakeFiles/edit_cache.dir
+C:/Users/Danil/github/messenger/build-prog_server-Desktop_Qt_6_2_4_MinGW_64_bit-Debug/CMakeFiles/rebuild_cache.dir
+C:/Users/Danil/github/messenger/build-prog_server-Desktop_Qt_6_2_4_MinGW_64_bit-Debug/CMakeFiles/prog_server_autogen_timestamp_deps.dir
+C:/Users/Danil/github/messenger/build-prog_server-Desktop_Qt_6_2_4_MinGW_64_bit-Debug/CMakeFiles/prog_server_autogen.dir
