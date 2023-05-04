@@ -28,19 +28,28 @@ void myserver::incomingConnection(qintptr socketDescriptor)
 
     qDebug() << socketDescriptor << " : new client connected";
 
-    socket->write("You are connect");
+    // socket->write("You are connect");
     _ArrSocket.insert(socket);
 }
 
-void myserver::SendToClient(QString str)
+void myserver::SendToClient(QString str, ETypeAction typeAction)
 {
     _Data.clear();
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
+    output << typeAction;
     output << str;
     for (auto& sock : _ArrSocket) {
         sock->write(_Data);
     }
+}
+
+bool myserver::UserVerification(QString login, QString pass)
+{
+    if (login == "Danya" && pass == "qwe123") {
+        return true;
+    }
+    return false;
 }
 
 void myserver::SlotReadyRead()
@@ -48,11 +57,30 @@ void myserver::SlotReadyRead()
     socket = (QTcpSocket*)sender();
     QDataStream input(socket);
     input.setVersion(QDataStream::Qt_6_2);
+
     if (input.status() == QDataStream::Ok) {
-        QString s;
-        input >> s;
-        qDebug() << "Read : " << s;
-        SendToClient(s);
+        int typeAction;
+        input >> typeAction;
+
+        if (typeAction == ETypeAction::AUTHORIZATION) {
+            QString login;
+            QString pass;
+            input >> login >> pass;
+            qDebug() << "Log in : " << login << " -- " << pass;
+
+            if (UserVerification(login, pass)) {
+                SendToClient(login, ETypeAction::AUTHORIZATION);
+            }
+            else {
+                SendToClient("", ETypeAction::AUTHORIZATION);
+            }
+        }
+        else if (typeAction == ETypeAction::MESSAGE) {
+            QString msg;
+            input >> msg;
+            qDebug() << "MSG : " << msg;
+            SendToClient(msg, ETypeAction::MESSAGE);
+        }
     }
     else {
         qDebug() << "Error read!";

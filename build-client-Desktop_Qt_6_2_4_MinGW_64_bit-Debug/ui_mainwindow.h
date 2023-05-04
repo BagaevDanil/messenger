@@ -25,7 +25,6 @@ class Ui_MainWindow
 {
 public:
     QWidget *centralwidget;
-    QPushButton *pushButtonConnect;
     QLineEdit *lineEdit;
     QPushButton *pushButtonSend;
     QTextBrowser *textBrowser;
@@ -39,9 +38,6 @@ public:
         MainWindow->resize(387, 538);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
-        pushButtonConnect = new QPushButton(centralwidget);
-        pushButtonConnect->setObjectName(QString::fromUtf8("pushButtonConnect"));
-        pushButtonConnect->setGeometry(QRect(40, 10, 301, 31));
         lineEdit = new QLineEdit(centralwidget);
         lineEdit->setObjectName(QString::fromUtf8("lineEdit"));
         lineEdit->setGeometry(QRect(40, 440, 241, 31));
@@ -50,11 +46,11 @@ public:
         pushButtonSend->setGeometry(QRect(290, 440, 51, 31));
         textBrowser = new QTextBrowser(centralwidget);
         textBrowser->setObjectName(QString::fromUtf8("textBrowser"));
-        textBrowser->setGeometry(QRect(40, 50, 301, 381));
+        textBrowser->setGeometry(QRect(40, 20, 301, 411));
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
-        menubar->setGeometry(QRect(0, 0, 387, 22));
+        menubar->setGeometry(QRect(0, 0, 387, 26));
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
@@ -68,7 +64,6 @@ public:
     void retranslateUi(QMainWindow *MainWindow)
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
-        pushButtonConnect->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
         pushButtonSend->setText(QCoreApplication::translate("MainWindow", "Send", nullptr));
     } // retranslateUi
 

@@ -4,6 +4,11 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 
+enum ETypeAction {
+    AUTHORIZATION,
+    MESSAGE,
+};
+
 class myserver: public QTcpServer
 {
     Q_OBJECT
@@ -17,7 +22,9 @@ public:
 private:
      QSet<QTcpSocket*> _ArrSocket;
      QByteArray _Data;
-     void SendToClient(QString str);
+     void SendToClient(QString str, ETypeAction typeAction = MESSAGE);
+     bool UserVerification(QString login, QString pass);
+
 
 public slots:
     void startServer();

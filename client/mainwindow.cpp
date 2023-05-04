@@ -1,15 +1,22 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
+enum ETypeAction {
+    AUTHORIZATION,
+    MESSAGE,
+};
+
+MainWindow::MainWindow(QString userLogin, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    socket = new QTcpSocket(this);
+    _Socket = new QTcpSocket(this);
+    _UserLogin = userLogin;
 
-    connect(socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
-    connect(socket, SIGNAL(disconnected()), socket, SLOT(deleteLater()));
+    connect(_Socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
+    connect(_Socket, SIGNAL(disconnected()), _Socket, SLOT(deleteLater()));
+    _Socket->connectToHost("127.0.0.1", 2323);
 }
 
 MainWindow::~MainWindow()
@@ -17,34 +24,31 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
-void MainWindow::on_pushButtonConnect_clicked()
-{
-    qDebug() << "connectToHost";
-    // socket->SetUserLogin("Danya");
-    socket->connectToHost("127.0.0.1", 2323);
-}
-
 void MainWindow::SendToServer(QString str)
 {
     _Data.clear();
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
+    output << ETypeAction::MESSAGE;
     output << str;
-    socket->write(_Data);
+    _Socket->write(_Data);
 }
 
 void MainWindow::SlotReadyRead()
 {
-    QDataStream input(socket);
+    QDataStream input(_Socket);
     input.setVersion(QDataStream::Qt_6_2);
+
     if (input.status() == QDataStream::Ok) {
+        int i;
+        input >> i;
         QString s;
         input >> s;
+        qDebug() << i << s;
         ui->textBrowser->append(s);
     }
     else {
-        ui->textBrowser->append("Error read!");
+        // Ошибка при получении данных
     }
 }
 

@@ -13,18 +13,17 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(QString userLogin, QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
-    void on_pushButtonConnect_clicked();
-
     void on_pushButtonSend_clicked();
 
 private:
     Ui::MainWindow *ui;
-    QTcpSocket* socket;
+    QTcpSocket* _Socket;
     QByteArray _Data;
+    QString _UserLogin;
     void SendToServer(QString str);
 
 public slots:
