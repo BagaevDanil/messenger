@@ -3,12 +3,7 @@
 
 #include <QTcpServer>
 #include <QTcpSocket>
-
-enum ETypeAction {
-    AUTHORIZATION,
-    MESSAGE,
-    CHECK_CONNECTION,
-};
+#include "../common/common.h"
 
 class TServer: public QTcpServer
 {

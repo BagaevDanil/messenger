@@ -6,7 +6,7 @@ TServer::~TServer(){}
 
 bool TServer::StartServer()
 {
-    if (this->listen(QHostAddress::Any, 2323))
+    if (this->listen(QHostAddress::Any, HOST::PORT))
     {
         qDebug() << "Start server!";
         return true;

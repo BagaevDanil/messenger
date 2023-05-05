@@ -1,12 +1,6 @@
 #include "chatwindow.h"
 #include "ui_chatwindow.h"
-
-
-enum ETypeAction {
-    AUTHORIZATION,
-    MESSAGE,
-    CHECK_CONNECTION,
-};
+#include "../common/common.h"
 
 void TChatWindow::HostExists()
 {
@@ -33,7 +27,7 @@ bool TChatWindow::ConnectToHost()
     _Socket = new QTcpSocket(this);
     connect(_Socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
     connect(_Socket, SIGNAL(disconnected()),this,SLOT(SlotSockDisc()));
-    _Socket->connectToHost("127.0.0.1", 2323);
+    _Socket->connectToHost(HOST::ADDRES, HOST::PORT);
 
     if (_Socket->waitForConnected()) {
         _Data.clear();
