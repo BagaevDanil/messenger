@@ -12,14 +12,15 @@ bool TChatWindow::HostExists()
 
     Connected = ConnectToHost();
     while (!Connected) {
+        qDebug() << "-Try connect to HOST";
         auto answer = QMessageBox::question(this, "Ошибка соедениния!", "Повторить попытку?");
         if (answer == QMessageBox::StandardButton::No) {
+            qDebug() << "   Cancel connect to HOST";
             return false;
         }
-        qDebug() << "Try connect...";
         Connected = ConnectToHost();
     }
-    qDebug() << "Connected!";
+    qDebug() << "   Successfully connected";
     return false;
 }
 
@@ -89,7 +90,7 @@ void TChatWindow::GetPackMessageEarly()
 void TChatWindow::SlotSockDisc()
 {
     Connected = false;
-    qDebug() << "Disconnect host!";
+    qDebug() << "-Disconnect HOST!";
 }
 
 TChatWindow::~TChatWindow()
@@ -112,11 +113,12 @@ void TChatWindow::SendMsgToServer()
 
 void TChatWindow::SlotReadyRead()
 {
+    qDebug() << "-Ans for HOST :";
     QDataStream input(_Socket);
     input.setVersion(QDataStream::Qt_6_2);
 
     if (input.status() != QDataStream::Ok) {
-        qDebug() << "Error read!";
+        qDebug() << "   Error read!";
         return;
     }
 
@@ -125,7 +127,7 @@ void TChatWindow::SlotReadyRead()
     if (typeAction == ETypeAction::MESSAGE) {
         TMessageData msg;
         input >> msg;
-        qDebug() << msg.Text;
+        qDebug() << "   Message <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
 
         auto* msgUi = new TTextMessage(msg, this);
         _Layout->insertWidget(0, msgUi);
@@ -134,7 +136,7 @@ void TChatWindow::SlotReadyRead()
         TMessagePack msgPack;
         input >> msgPack;
         _CurInd = msgPack.CurInd;
-        qDebug() << msgPack.SizePack << msgPack.CurInd;
+        qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd<< "(ind)";
 
         for (int i = 0; i < msgPack.SizePack; i++) {
             auto* msgUi = new TTextMessage(msgPack.ArrMessage[i], this);
@@ -152,7 +154,7 @@ void TChatWindow::SlotReadyRead()
         input.setVersion(QDataStream::Qt_6_2);
         QString s;
         input >> s;
-        qDebug() << "QJJQJQ" << s;
+        qDebug() << "   Check connection : " << s;
     }
 }
 
