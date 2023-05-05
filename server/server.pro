@@ -11,6 +11,7 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
+    ../common/common.cpp \
     server.cpp
 
 # The following define makes your compiler emit warnings if you use

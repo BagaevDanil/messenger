@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTcpSocket>
 #include <QMessageBox>
+#include <QVBoxLayout>
 
 namespace Ui {
 class TChatWindow;
@@ -16,7 +17,7 @@ class TChatWindow : public QMainWindow
 public:
     explicit TChatWindow(QString userLogin, QWidget *parent = nullptr);
     ~TChatWindow();
-    void HostExists();
+    bool HostExists();
     bool ConnectToHost();
 
 private slots:
@@ -27,12 +28,17 @@ private:
     QTcpSocket* _Socket;
     QByteArray _Data;
     bool Connected;
+    int _CurInd;
     QString _UserLogin;
-    void SendToServer(QString str);
+    void SendMsgToServer();
+    QVBoxLayout* _Layout;
+    QWidget* _Container;
+    QPushButton* _Button;
 
 public slots:
     void SlotReadyRead();
     void SlotSockDisc();
+    void GetPackMessageEarly();
 
 };
 

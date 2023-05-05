@@ -1,4 +1,7 @@
 #include "server.h"
+#include <QTime>
+
+int SIZE_PACK = 10;
 
 TServer::TServer(){}
 
@@ -26,16 +29,62 @@ void TServer::incomingConnection(qintptr socketDescriptor)
 
     qDebug() << "New client connected : " << socketDescriptor;
     _ArrSocket.insert(socket);
+
+    //
+    TMessagePack msgPack;
+    if (_ArrMessage.empty()) {
+        msgPack.SizePack = 0;
+        msgPack.CurInd = 0;
+        SendPackToClient(msgPack);
+        return;
+    }
+
+    msgPack.SizePack = std::min(int(_ArrMessage.size()), SIZE_PACK);
+    msgPack.CurInd = _ArrMessage.size() - msgPack.SizePack;
+
+    for (int i = _ArrMessage.size() - 1; i >= _ArrMessage.size() - msgPack.SizePack; --i) {
+        msgPack.ArrMessage.push_back(_ArrMessage[i]);
+    }
+    SendPackToClient(msgPack);
 }
 
-void TServer::SendToClient(QString str, ETypeAction typeAction)
+template <class T>
+void TServer::SendToClient(T msg, ETypeAction typeAction)
 {
     _Data.clear();
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
 
     output << typeAction;
-    output << str;
+    output << msg;
+
+    for (auto& sock : _ArrSocket) {
+        sock->write(_Data);
+    }
+}
+
+void TServer::SendPackToClient(TMessagePack msgPack)
+{
+    _Data.clear();
+    QDataStream output(&_Data, QIODevice::WriteOnly);
+    output.setVersion(QDataStream::Qt_6_2);
+
+    output << ETypeAction::MESSAGE_EARLY;
+    output << msgPack;
+
+    for (auto& sock : _ArrSocket) {
+        sock->write(_Data);
+    }
+}
+
+void TServer::SendMsgToClient(TMessageData msg, ETypeAction typeAction)
+{
+    _Data.clear();
+    QDataStream output(&_Data, QIODevice::WriteOnly);
+    output.setVersion(QDataStream::Qt_6_2);
+
+    output << typeAction;
+    output << msg;
 
     for (auto& sock : _ArrSocket) {
         sock->write(_Data);
@@ -77,15 +126,30 @@ void TServer::SlotReadyRead()
         SendToClient(login, ETypeAction::AUTHORIZATION);
     }
     else if (typeAction == ETypeAction::MESSAGE) {
-        QString msg;
+        TMessageData msg;
         input >> msg;
-        qDebug() << "MSG : " << msg;
+        msg.Time = QTime::currentTime().toString("hh:mm:ss");
+        _ArrMessage.push_back(msg);
 
-        SendToClient(msg, ETypeAction::MESSAGE);
+        qDebug() << "Msg (" << msg.Login << ") : " << msg.Text << " | " << msg.Time;
+        SendMsgToClient(msg, ETypeAction::MESSAGE);
     }
     else if (typeAction == ETypeAction::CHECK_CONNECTION) {
-        QString msg = "200 OK";
-        SendToClient(msg, ETypeAction::CHECK_CONNECTION);
+        //QString msg = "200ok";
+        //SendToClient(msg, ETypeAction::CHECK_CONNECTION);
+    }
+    else if (typeAction == ETypeAction::MESSAGE_EARLY) {
+        int ind;
+        input >> ind;
+
+        TMessagePack msgPack;
+        msgPack.SizePack = std::min(ind, SIZE_PACK);
+        msgPack.CurInd = ind - msgPack.SizePack;
+
+        for (int i = ind - 1; i >= ind - msgPack.SizePack; --i) {
+            msgPack.ArrMessage.push_back(_ArrMessage[i]);
+        }
+        SendToClient(msgPack, ETypeAction::MESSAGE_EARLY);
     }
 }
 
