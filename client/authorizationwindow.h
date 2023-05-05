@@ -3,7 +3,9 @@
 
 #include <QMainWindow>
 #include <QTcpSocket>
-#include "mainwindow.h"
+#include <QMessageBox>
+//#include "mainwindow.h"
+#include "chatwindow.h"
 
 namespace Ui {
 class TAuthorizationWindow;
@@ -16,15 +18,21 @@ class TAuthorizationWindow : public QMainWindow
 public:
     explicit TAuthorizationWindow(QWidget *parent = nullptr);
     ~TAuthorizationWindow();
+    void HostExists();
+    bool ConnectToHost();
+
 
 private:
     Ui::TAuthorizationWindow *ui;
-    QTcpSocket* socket;
+    QTcpSocket* _Socket;
     QByteArray _Data;
-    void SendToServer(QString str);
+    void AuthorizationServer();
+    bool Connected;
 
 public slots:
     void SlotReadyRead();
+    void SlotSockDisc();
+
 private slots:
     void on_pushButtonAuthorization_clicked();
 };

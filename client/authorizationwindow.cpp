@@ -4,19 +4,68 @@
 enum ETypeAction {
     AUTHORIZATION,
     MESSAGE,
+    CHECK_CONNECTION,
 };
 
-TAuthorizationWindow::TAuthorizationWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::TAuthorizationWindow)
+void TAuthorizationWindow::HostExists()
+{
+    if (!Connected) {
+        Connected = ConnectToHost();
+    }
+
+    while (!Connected) {
+        auto answer = QMessageBox::question(this, "Ошибка соедениния!", "Повторить попытку?");
+        if (answer == QMessageBox::StandardButton::No) {
+            return;
+        }
+        qDebug() << "Try connect...";
+        Connected = ConnectToHost();
+    }
+    qDebug() << "Connected!";
+}
+
+bool TAuthorizationWindow::ConnectToHost()
+{
+    if (_Socket) {
+        delete _Socket;
+    }
+    _Socket = new QTcpSocket(this);
+    connect(_Socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
+    connect(_Socket, SIGNAL(disconnected()),this,SLOT(SlotSockDisc()));
+    _Socket->connectToHost("127.0.0.1", 2323);
+
+    if (_Socket->waitForConnected()) {
+        _Data.clear();
+        QDataStream output(&_Data, QIODevice::WriteOnly);
+        output.setVersion(QDataStream::Qt_6_2);
+
+        output << ETypeAction::CHECK_CONNECTION;
+        _Socket->write(_Data);
+
+        if (_Socket->waitForReadyRead()) {
+            QByteArray bytes = _Socket->readAll();
+            if (bytes.contains("")) { // 200 OK
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+TAuthorizationWindow::TAuthorizationWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::TAuthorizationWindow)
+    , _Socket(nullptr)
+    , Connected(false)
 {
     ui->setupUi(this);
-    socket = new QTcpSocket(this);
-    connect(socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
-    connect(socket, SIGNAL(disconnected()), socket, SLOT(deleteLater()));
+    Connected = ConnectToHost();
+}
 
-    socket->connectToHost("127.0.0.1", 2323);
-    // if (error conn) repeat
+void TAuthorizationWindow::SlotSockDisc()
+{
+    Connected = false;
+    qDebug() << "Disconnect host!";
 }
 
 TAuthorizationWindow::~TAuthorizationWindow()
@@ -24,7 +73,7 @@ TAuthorizationWindow::~TAuthorizationWindow()
     delete ui;
 }
 
-void TAuthorizationWindow::SendToServer(QString str)
+void TAuthorizationWindow::AuthorizationServer()
 {
     _Data.clear();
     QDataStream output(&_Data, QIODevice::WriteOnly);
@@ -36,38 +85,41 @@ void TAuthorizationWindow::SendToServer(QString str)
     output << login;
     output << pass;
 
-    socket->write(_Data);
+    _Socket->write(_Data);
 }
 
 void TAuthorizationWindow::SlotReadyRead()
 {
-    QDataStream input(socket);
+    QDataStream input(_Socket);
     input.setVersion(QDataStream::Qt_6_2);
 
-    if (input.status() == QDataStream::Ok) {
-        int typeAction;
-        input >> typeAction;
-
-        if (typeAction == ETypeAction::AUTHORIZATION) {
-            QString login;
-            input >> login;
-            if (login == "") {
-                // Неправильный логин или пароль
-                return;
-            }
-            qDebug() << "Good:" << login;
-            MainWindow* chatWindow = new MainWindow(login);
-            chatWindow->show();
-            this->close();
-        }
+    if (input.status() != QDataStream::Ok) {
+        qDebug() << "Error read";
+        return;
     }
-    else {
-        // Error read
+    int typeAction;
+    input >> typeAction;
+
+    if (typeAction == ETypeAction::AUTHORIZATION) {
+        QString login;
+        input >> login;
+        if (login == "") {
+            qDebug() << "Uncorrected pass or login";
+            return;
+        }
+
+        qDebug() << "Authorization :" << login;
+        TChatWindow* chatWindow = new TChatWindow(login);
+        chatWindow->show();
+
+        _Socket->disconnect();
+        this->close();
     }
 }
 
 void TAuthorizationWindow::on_pushButtonAuthorization_clicked()
 {
-    SendToServer("");
+    HostExists();
+    AuthorizationServer();
 }
 
