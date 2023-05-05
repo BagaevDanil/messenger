@@ -96,10 +96,13 @@ void TChatWindow::SlotReadyRead()
     }
 
     int type;
-    QString s;
-    input >> type >> s;
-    qDebug() << type << s;
-    ui->textBrowser->append(s);
+    input >> type;
+    if (type == ETypeAction::MESSAGE) {
+        QString s;
+        input >> s;
+        qDebug() << type << s;
+        ui->textBrowser->append(s);
+    }
 }
 
 void TChatWindow::on_pushButtonSend_clicked()

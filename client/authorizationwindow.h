@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include <QTcpSocket>
 #include <QMessageBox>
-//#include "mainwindow.h"
 #include "chatwindow.h"
 
 namespace Ui {

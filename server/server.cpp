@@ -85,7 +85,7 @@ void TServer::SlotReadyRead()
     }
     else if (typeAction == ETypeAction::CHECK_CONNECTION) {
         QString msg = "200 OK";
-        SendToClient(msg, ETypeAction::MESSAGE);
+        SendToClient(msg, ETypeAction::CHECK_CONNECTION);
     }
 }
 
