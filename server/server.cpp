@@ -11,10 +11,10 @@ bool TServer::StartServer()
 {
     if (this->listen(QHostAddress::Any, HOST::PORT))
     {
-        qDebug() << "Start server!";
+        qDebug() << "-Start server!";
         return true;
     }
-    qDebug() << "Server error!";
+    qDebug() << "-Error start server!";
     return false;
 }
 
@@ -27,7 +27,7 @@ void TServer::incomingConnection(qintptr socketDescriptor)
     connect(socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
     connect(socket, SIGNAL(disconnected()), this, SLOT(SlotSocketDisc()));
 
-    qDebug() << "New client connected : " << socketDescriptor;
+    qDebug() << "-New client connected : " << socketDescriptor;
     _ArrSocket.insert(socket);
 
     //
@@ -101,12 +101,13 @@ bool TServer::UserVerification(QString login, QString pass)
 
 void TServer::SlotReadyRead()
 {
+    qDebug() << "-Ans for CLIENT :";
     socket = (QTcpSocket*)sender();
     QDataStream input(socket);
     input.setVersion(QDataStream::Qt_6_2);
 
     if (input.status() != QDataStream::Ok) {
-        qDebug() << "Error read!";
+        qDebug() << "   Error read!";
         return;
     }
 
@@ -117,7 +118,7 @@ void TServer::SlotReadyRead()
         QString login;
         QString pass;
         input >> login >> pass;
-        qDebug() << "Log in : " << login << " -- " << pass;
+        qDebug() << "   Log in : " << login << " | " << pass;
 
         if (!UserVerification(login, pass)) {
             SendToClient("", ETypeAction::AUTHORIZATION);
@@ -131,10 +132,11 @@ void TServer::SlotReadyRead()
         msg.Time = QTime::currentTime().toString("hh:mm:ss");
         _ArrMessage.push_back(msg);
 
-        qDebug() << "Msg (" << msg.Login << ") : " << msg.Text << " | " << msg.Time;
+        qDebug() << "   Msg (" << msg.Login << ") : " << msg.Text << " | " << msg.Time;
         SendMsgToClient(msg, ETypeAction::MESSAGE);
     }
     else if (typeAction == ETypeAction::CHECK_CONNECTION) {
+        qDebug() << "   Check connection : " << "200ok";
         //QString msg = "200ok";
         //SendToClient(msg, ETypeAction::CHECK_CONNECTION);
     }
@@ -146,6 +148,8 @@ void TServer::SlotReadyRead()
         msgPack.SizePack = std::min(ind, SIZE_PACK);
         msgPack.CurInd = ind - msgPack.SizePack;
 
+        qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd << "(ind)";
+
         for (int i = ind - 1; i >= ind - msgPack.SizePack; --i) {
             msgPack.ArrMessage.push_back(_ArrMessage[i]);
         }
@@ -155,8 +159,8 @@ void TServer::SlotReadyRead()
 
 void TServer::SlotSocketDisc()
 {
-    qDebug() << "Disconnect";
     socket = (QTcpSocket*)sender();
+    qDebug() << "-Disconnect CLIENT : " << socket->socketDescriptor();
     _ArrSocket.erase(_ArrSocket.find(socket));
     socket->deleteLater();
 }
