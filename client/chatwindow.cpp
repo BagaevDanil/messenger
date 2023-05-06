@@ -36,19 +36,8 @@ bool TChatWindow::ConnectToHost()
     _Socket->connectToHost(HOST::ADDRES, HOST::PORT);
 
     if (_Socket->waitForConnected()) {
-        // _Data.clear();
-        //QDataStream output(&_Data, QIODevice::WriteOnly);
-        //output.setVersion(QDataStream::Qt_6_2);
-
-        //output << ETypeAction::CHECK_CONNECTION;
-        //_Socket->write(_Data);
-
         if (_Socket->waitForReadyRead()) {
-
-            //QByteArray bytes = _Socket->readAll();
-            //if (bytes.contains("")) { // 200 OK
-                return true;
-            //}
+            return true;
         }
     }
     return false;
@@ -58,9 +47,9 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::TChatWindow)
     , _Socket(nullptr)
+    , _CurInd(-1)
     , _UserLogin(userLogin)
     , _Button(nullptr)
-    , _CurInd(-1)
 {
     ui->setupUi(this);
 
@@ -70,7 +59,19 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     ui->scrollArea->setWidget(_Container);
     _Layout = new QVBoxLayout(_Container);
 
+    connect(ui->scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(MoveScroll(int)));
+
     Connected = ConnectToHost();
+}
+
+void TChatWindow::MoveScroll(int value)
+{
+    if (ui->scrollArea->verticalScrollBar()->maximum() - value > 100) {
+        ui->pushButtonToBottom->setVisible(true);
+    }
+    else {
+        ui->pushButtonToBottom->setVisible(false);
+    }
 }
 
 void TChatWindow::GetPackMessageEarly()
@@ -134,7 +135,7 @@ void TChatWindow::SlotReadyRead()
         auto* msgUi = new TTextMessage(msg, this);
         _Layout->addWidget(msgUi);
         if (ui->scrollArea->verticalScrollBar()->maximum() - ui->scrollArea->verticalScrollBar()->value() < 80) {
-            QTimer::singleShot(200, this, &TChatWindow::on_pushButton_clicked);
+            QTimer::singleShot(200, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
     }
     else if (typeAction == ETypeAction::MESSAGE_EARLY) {
@@ -148,7 +149,7 @@ void TChatWindow::SlotReadyRead()
         }
         int oldH = ui->scrollArea->verticalScrollBar()->maximum();
         if (_CurInd == -1) {
-            QTimer::singleShot(10, this, &TChatWindow::on_pushButton_clicked);
+            QTimer::singleShot(10, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
         else {
             QTimer::singleShot(10, this, [this, oldH](){
@@ -185,7 +186,7 @@ void TChatWindow::SetShiftHistory(int h)
     qDebug() << ui->scrollArea->verticalScrollBar()->maximum() << h;
 }
 
-void TChatWindow::on_pushButton_clicked()
+void TChatWindow::on_pushButtonToBottom_clicked()
 {
     ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximum());
 }

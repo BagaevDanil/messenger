@@ -23,7 +23,7 @@ public:
 private slots:
     void on_pushButtonSend_clicked();
 
-    void on_pushButton_clicked();
+    void on_pushButtonToBottom_clicked();
 
 private:
     Ui::TChatWindow *ui;
@@ -42,6 +42,7 @@ public slots:
     void SlotSockDisc();
     void GetPackMessageEarly();
     void SetShiftHistory(int h);
+    void MoveScroll(int x);
 
 };
 
