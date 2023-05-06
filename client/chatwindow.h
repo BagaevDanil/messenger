@@ -23,6 +23,8 @@ public:
 private slots:
     void on_pushButtonSend_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::TChatWindow *ui;
     QTcpSocket* _Socket;
@@ -39,6 +41,7 @@ public slots:
     void SlotReadyRead();
     void SlotSockDisc();
     void GetPackMessageEarly();
+    void SetShiftHistory(int h);
 
 };
 

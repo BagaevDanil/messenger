@@ -3,6 +3,7 @@
 #include "../common/common.h"
 #include "textmessage.h"
 #include <QScrollBar>
+#include <QTimer>
 
 bool TChatWindow::HostExists()
 {
@@ -59,6 +60,7 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     , _Socket(nullptr)
     , _UserLogin(userLogin)
     , _Button(nullptr)
+    , _CurInd(-1)
 {
     ui->setupUi(this);
 
@@ -130,23 +132,35 @@ void TChatWindow::SlotReadyRead()
         qDebug() << "   Message <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
 
         auto* msgUi = new TTextMessage(msg, this);
-        _Layout->insertWidget(0, msgUi);
+        _Layout->addWidget(msgUi);
+        if (ui->scrollArea->verticalScrollBar()->maximum() - ui->scrollArea->verticalScrollBar()->value() < 80) {
+            QTimer::singleShot(200, this, &TChatWindow::on_pushButton_clicked);
+        }
     }
     else if (typeAction == ETypeAction::MESSAGE_EARLY) {
         TMessagePack msgPack;
         input >> msgPack;
-        _CurInd = msgPack.CurInd;
         qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd<< "(ind)";
 
         for (int i = 0; i < msgPack.SizePack; i++) {
             auto* msgUi = new TTextMessage(msgPack.ArrMessage[i], this);
-            _Layout->addWidget(msgUi);
+            _Layout->insertWidget(0, msgUi);
+        }
+        int oldH = ui->scrollArea->verticalScrollBar()->maximum();
+        if (_CurInd == -1) {
+            QTimer::singleShot(10, this, &TChatWindow::on_pushButton_clicked);
+        }
+        else {
+            QTimer::singleShot(10, this, [this, oldH](){
+                SetShiftHistory(oldH);
+            });
         }
 
+        _CurInd = msgPack.CurInd;
         if (_CurInd != 0) {
             _Button = new QPushButton("Раннее", this);
             connect(_Button, SIGNAL(clicked()), this, SLOT(GetPackMessageEarly()));
-            _Layout->addWidget(_Button);
+            _Layout->insertWidget(0, _Button);
         }
     }
     else if (typeAction == ETypeAction::CHECK_CONNECTION) {
@@ -164,3 +178,16 @@ void TChatWindow::on_pushButtonSend_clicked()
         SendMsgToServer();
     }
 }
+
+void TChatWindow::SetShiftHistory(int h)
+{
+    ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximum() - h);
+    qDebug() << ui->scrollArea->verticalScrollBar()->maximum() << h;
+}
+
+void TChatWindow::on_pushButton_clicked()
+{
+    ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximum());
+}
+
+
