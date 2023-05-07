@@ -1,5 +1,7 @@
 #include "textmessage.h"
 #include "ui_textmessage.h"
+#include <QTimer>
+#include <QScrollBar>
 
 TTextMessage::TTextMessage(TMessageData msg, QWidget *parent)
     : QWidget(parent)
@@ -7,9 +9,24 @@ TTextMessage::TTextMessage(TMessageData msg, QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->labelText->setText(msg.Text);
+    // ui->labelText->setText(msg.Text);
     ui->labelLogin->setText(msg.Login);
     ui->labelTime->setText(msg.Time);
+
+    ui->textEdit->setText(msg.Text);
+    QTimer::singleShot(5, this, &TTextMessage::onTextChanged);
+
+    //ui->textEdit->adjustSize();
+    //ui->textEdit->setVisible(false);
+}
+
+void TTextMessage::onTextChanged()
+{
+  QSize size = ui->textEdit->document()->size().toSize();
+  ui->textEdit->setFixedHeight( size.height());
+  //ui->textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  ui->textEdit->verticalScrollBar()->setVisible(false);
+
 }
 
 TTextMessage::TTextMessage(QString login, QString text, QString time, QWidget *parent)
@@ -18,7 +35,7 @@ TTextMessage::TTextMessage(QString login, QString text, QString time, QWidget *p
 {
     ui->setupUi(this);
 
-    ui->labelText->setText(text);
+    // ui->labelText->setText(text);
     ui->labelLogin->setText(login);
     ui->labelTime->setText(time);
 

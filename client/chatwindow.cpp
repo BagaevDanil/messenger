@@ -135,7 +135,7 @@ void TChatWindow::SlotReadyRead()
         auto* msgUi = new TTextMessage(msg, this);
         _Layout->addWidget(msgUi);
         if (ui->scrollArea->verticalScrollBar()->maximum() - ui->scrollArea->verticalScrollBar()->value() < 80) {
-            QTimer::singleShot(200, this, &TChatWindow::on_pushButtonToBottom_clicked);
+            QTimer::singleShot(50, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
     }
     else if (typeAction == ETypeAction::MESSAGE_EARLY) {
@@ -149,10 +149,10 @@ void TChatWindow::SlotReadyRead()
         }
         int oldH = ui->scrollArea->verticalScrollBar()->maximum();
         if (_CurInd == -1) {
-            QTimer::singleShot(10, this, &TChatWindow::on_pushButtonToBottom_clicked);
+            QTimer::singleShot(100, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
         else {
-            QTimer::singleShot(10, this, [this, oldH](){
+            QTimer::singleShot(100, this, [this, oldH](){
                 SetShiftHistory(oldH);
             });
         }

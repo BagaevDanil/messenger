@@ -18,6 +18,9 @@ public:
     TTextMessage(TMessageData msg, QWidget *parent = nullptr);
     ~TTextMessage();
 
+public slots:
+    void onTextChanged();
+
 private:
     Ui::TTextMessage *ui;
 };

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>250</width>
-    <height>202</height>
+    <height>183</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -66,57 +66,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="labelText">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="font">
-      <font>
-       <family>Arial</family>
-       <kerning>true</kerning>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(255, 255, 127);</string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
-     </property>
-     <property name="text">
-      <string>Октябрь уж наступил — уж роща отряхает
-Последние листы с нагих своих ветвей;
-Дохнул осенний хлад — дорога промерзает.
-Журча еще бежит за мельницу ручей,
-Но пруд уже застыл; сосед мой поспешает
-В отъезжие поля с охотою своей,
-И страждут озими от бешеной забавы,
-И будит лай собак уснувшие дубравы.</string>
-     </property>
-     <property name="textFormat">
-      <enum>Qt::AutoText</enum>
-     </property>
-     <property name="scaledContents">
-      <bool>false</bool>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
+    <widget class="QTextEdit" name="textEdit"/>
    </item>
    <item>
     <widget class="QLabel" name="labelTime">
