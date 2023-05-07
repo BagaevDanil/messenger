@@ -25,6 +25,8 @@ private slots:
 
     void on_pushButtonToBottom_clicked();
 
+    void on_lineEdit_returnPressed();
+
 private:
     Ui::TChatWindow *ui;
     QTcpSocket* _Socket;

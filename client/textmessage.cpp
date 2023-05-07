@@ -14,7 +14,7 @@ TTextMessage::TTextMessage(TMessageData msg, QWidget *parent)
     ui->labelTime->setText(msg.Time);
 
     ui->textEdit->setText(msg.Text);
-    QTimer::singleShot(5, this, &TTextMessage::onTextChanged);
+    QTimer::singleShot(2, this, &TTextMessage::onTextChanged);
 
     //ui->textEdit->adjustSize();
     //ui->textEdit->setVisible(false);

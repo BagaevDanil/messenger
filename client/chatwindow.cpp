@@ -149,10 +149,10 @@ void TChatWindow::SlotReadyRead()
         }
         int oldH = ui->scrollArea->verticalScrollBar()->maximum();
         if (_CurInd == -1) {
-            QTimer::singleShot(100, this, &TChatWindow::on_pushButtonToBottom_clicked);
+            QTimer::singleShot(70, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
         else {
-            QTimer::singleShot(100, this, [this, oldH](){
+            QTimer::singleShot(70, this, [this, oldH](){
                 SetShiftHistory(oldH);
             });
         }
@@ -191,4 +191,12 @@ void TChatWindow::on_pushButtonToBottom_clicked()
     ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximum());
 }
 
+
+
+void TChatWindow::on_lineEdit_returnPressed()
+{
+    if (HostExists()) {
+        SendMsgToServer();
+    }
+}
 
