@@ -8,8 +8,8 @@ enum ETypeAction {
     AUTHORIZATION,
     MESSAGE,
     CHECK_CONNECTION,
-    MESSAGE_EARLY,
-    MESSAGE_FILE,
+    MESSAGE_HISTORY,
+    DOWNLOAD_FROM_CLIENT,
     DOWNLOAD_FROM_SERVER,
 };
 
@@ -17,6 +17,21 @@ namespace HOST {
     const QString ADDRES = "127.0.0.1";
     const int PORT = 1234;
 };
+
+
+struct TDownloadFileIndo {
+    QString Login;
+    QString FileName;
+    int FileSize;
+
+public:
+    TDownloadFileIndo();
+    TDownloadFileIndo(QString login, QString fileName, int fileSize);
+
+    friend QDataStream& operator>> (QDataStream& in, TDownloadFileIndo& msg);
+    friend QDataStream& operator<< (QDataStream& out, TDownloadFileIndo& msg);
+};
+
 
 class TMessageData {
 public:

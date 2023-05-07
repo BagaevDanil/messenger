@@ -72,7 +72,7 @@ void TServer::SendPackToClient(TMessagePack msgPack)
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
 
-    output << ETypeAction::MESSAGE_EARLY;
+    output << ETypeAction::MESSAGE_HISTORY;
     output << msgPack;
 
     for (auto& sock : _ArrSocket) {
@@ -135,14 +135,6 @@ void TServer::SlotReadyRead()
             _ArrMessage.push_back(msg);
             _ArrFile.push_back({mapDownloadData[userDescr]._DataDownload, mapDownloadData[userDescr]._FileNameDownload});
             SendMsgToClient(msg, ETypeAction::MESSAGE);
-
-            /*QFile file;
-            QString path = "C:\\Users\\Danil\\github\\messenger\\result_" + mapDownloadData[userDescr]._FileNameDownload;
-            file.setFileName(path);
-            if (file.open(QIODevice::WriteOnly)) {
-                file.write(mapDownloadData[userDescr]._DataDownload); // записываем данные в файл
-                file.close();
-            }*/
         }
         return;
     }
@@ -177,7 +169,7 @@ void TServer::SlotReadyRead()
         //QString msg = "200ok";
         //SendToClient(msg, ETypeAction::CHECK_CONNECTION);
     }
-    else if (typeAction == ETypeAction::MESSAGE_EARLY) {
+    else if (typeAction == ETypeAction::MESSAGE_HISTORY) {
         int ind;
         input >> ind;
 
@@ -190,15 +182,18 @@ void TServer::SlotReadyRead()
         for (int i = ind - 1; i >= ind - msgPack.SizePack; --i) {
             msgPack.ArrMessage.push_back(_ArrMessage[i]);
         }
-        SendToClient(msgPack, ETypeAction::MESSAGE_EARLY);
+        SendToClient(msgPack, ETypeAction::MESSAGE_HISTORY);
     }
-    else if (typeAction == ETypeAction::MESSAGE_FILE) {
+    else if (typeAction == ETypeAction::DOWNLOAD_FROM_CLIENT) {
         mapDownloadData[userDescr]._Downloading = true;
-        input >> mapDownloadData[userDescr].UserLogin;
-        input >> mapDownloadData[userDescr]._FileNameDownload;
-        input >> mapDownloadData[userDescr]._FileByteSize;
+        TDownloadFileIndo info;
+        input >> info;
+
+        mapDownloadData[userDescr].UserLogin = info.Login;
+        mapDownloadData[userDescr]._FileNameDownload = info.FileName;
+        mapDownloadData[userDescr]._FileByteSize = info.FileSize;
         mapDownloadData[userDescr]._DataDownload.clear();
-        qDebug() << "   Start down: " << mapDownloadData[userDescr]._FileByteSize;
+        qDebug() << "   Start download : " << mapDownloadData[userDescr]._FileByteSize;
     }
     else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
         int fileId;
@@ -220,7 +215,6 @@ void TServer::SendFileToClient(QTcpSocket* socket, int fileId)
 
     output << ETypeAction::DOWNLOAD_FROM_SERVER;
     output << int(byteArray.size());
-    output << _ArrFile[fileId].Name;
 
     socket->write(_Data);
 

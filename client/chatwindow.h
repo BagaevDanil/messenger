@@ -5,6 +5,7 @@
 #include <QTcpSocket>
 #include <QMessageBox>
 #include <QVBoxLayout>
+#include "../common/common.h"
 
 namespace Ui {
 class TChatWindow;
@@ -35,7 +36,6 @@ private:
     bool Connected;
     int _CurInd;
     QString _UserLogin;
-    void SendMsgToServer();
     QVBoxLayout* _Layout;
     QWidget* _Container;
     QPushButton* _Button;
@@ -45,12 +45,20 @@ private:
     QByteArray _DataDownload;
     QString _FileNameDownload;
 
+    void AddNewMessage(TMessageData msg, bool toBottom);
+    void DownloaIterations();
+
+    template<class TypeData>
+    void SendDataToServer(TypeData data, ETypeAction action);
+
+
+
 public slots:
     void SlotReadyRead();
     void SlotSockDisc();
-    void GetPackMessageEarly();
+    void GetHistoryPack();
     void SetShiftHistory(int h);
-    void MoveScroll(int x);
+    void ChangeVericalScroll(int x);
 
 };
 

@@ -1,12 +1,17 @@
 #include "chatwindow.h"
 #include "ui_chatwindow.h"
-#include "../common/common.h"
 #include "textmessage.h"
 #include "formfilemessage.h"
 #include <QScrollBar>
 #include <QTimer>
 #include <QFile>
 #include <QFileDialog>
+
+int HEIGHT_AUTOMATIC_SCROLL_DOWN = 80;
+int TIME_AUTOMATIC_SCROLL_DOWN = 50;
+int TIME_AUTOMATIC_SCROLL_HISTORY = 100;
+int TIME_PAUSE_BEFORE_DOWNLOAD = 300;
+int BYTE_DOWNLOAD_PACK_SIZE = 32768;
 
 bool TChatWindow::HostExists()
 {
@@ -63,12 +68,12 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     ui->scrollArea->setWidget(_Container);
     _Layout = new QVBoxLayout(_Container);
 
-    connect(ui->scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(MoveScroll(int)));
+    connect(ui->scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(ChangeVericalScroll(int)));
 
     Connected = ConnectToHost();
 }
 
-void TChatWindow::MoveScroll(int value)
+void TChatWindow::ChangeVericalScroll(int value)
 {
     if (ui->scrollArea->verticalScrollBar()->maximum() - value > 100) {
         ui->pushButtonToBottom->setVisible(true);
@@ -78,20 +83,13 @@ void TChatWindow::MoveScroll(int value)
     }
 }
 
-void TChatWindow::GetPackMessageEarly()
+void TChatWindow::GetHistoryPack()
 {
     if (_Button) {
         delete _Button;
         _Button = nullptr;
     }
-    _Data.clear();
-    QDataStream output(&_Data, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_2);
-
-    output << ETypeAction::MESSAGE_EARLY;
-    output << _CurInd;
-
-    _Socket->write(_Data);
+    SendDataToServer(_CurInd, ETypeAction::MESSAGE_HISTORY);
 }
 
 void TChatWindow::SlotSockDisc()
@@ -105,15 +103,15 @@ TChatWindow::~TChatWindow()
     delete ui;
 }
 
-void TChatWindow::SendMsgToServer()
+template<class TypeData>
+void TChatWindow::SendDataToServer(TypeData data, ETypeAction action)
 {
     _Data.clear();
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
 
-    TMessageData msg(_UserLogin, ui->lineEdit->text(), "0", TMessageData::ETypeMessage::TEXT);
-    output << ETypeAction::MESSAGE;
-    output << msg;
+    output << action;
+    output << data;
 
     _Socket->write(_Data);
 }
@@ -127,58 +125,80 @@ void TChatWindow::SendFileToServer(QString fileName)
     if (sendFile->open(QFile::ReadOnly)) {
         qDebug() << "   File is open";
 
-        _Data.clear();
-        QDataStream output(&_Data, QIODevice::WriteOnly);
-        output.setVersion(QDataStream::Qt_6_2);
-
         byteArray = sendFile->readAll();
         QString fileName = QFileInfo(*sendFile).fileName();
         qDebug() << "   File: " << fileName << byteArray.size();
 
-        output << ETypeAction::MESSAGE_FILE;
-        output << _UserLogin;
-        output << fileName;
-        output << int(byteArray.size());
-        _Socket->write(_Data);
+        TDownloadFileIndo info(_UserLogin, fileName, int(byteArray.size()));
+        SendDataToServer(info, ETypeAction::DOWNLOAD_FROM_CLIENT);
     }
     else {
         qDebug() << "   Error file open";
         return;
     }
 
-    QTimer::singleShot(300, this, [this, byteArray](){
-        int BYTE_PACK_SIZE = 32000;
-        int i = 0;
-        for (i = 0; i < byteArray.size(); i += BYTE_PACK_SIZE) {
-            _Socket->write(byteArray.mid(i, BYTE_PACK_SIZE));
+    QTimer::singleShot(TIME_PAUSE_BEFORE_DOWNLOAD, this, [this, byteArray](){
+        int byteSend;
+        for (byteSend = 0; byteSend < byteArray.size(); byteSend += BYTE_DOWNLOAD_PACK_SIZE) {
+            _Socket->write(byteArray.mid(byteSend, BYTE_DOWNLOAD_PACK_SIZE));
         }
-        _Socket->write(byteArray.mid(i, byteArray.size() - i));
+        _Socket->write(byteArray.mid(byteSend, byteArray.size() - byteSend));
     });
 }
 
-void TChatWindow::DownloadFileFromHost(int id, QString fileName)
+void TChatWindow::DownloadFileFromHost(int fileId, QString fileName)
 {
-    qDebug() << "Download File From Host : " << id;
-
+    qDebug() << "Download File From Host : " << fileId;
     _FileNameDownload = QFileDialog::getSaveFileName(
                         this,
                         "Open file",
                         "../" + fileName,
                         "All files (*.*)"
                     );
-    if (_FileNameDownload.isEmpty()) {
-        return;
+    if (!_FileNameDownload.isEmpty()) {
+        SendDataToServer(fileId, ETypeAction::DOWNLOAD_FROM_SERVER);
+    }
+}
+
+void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
+{
+    QWidget* msgForm;
+    if (msg.Type == TMessageData::ETypeMessage::TEXT) {
+        qDebug() << "   MessageText <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
+        msgForm = new TTextMessage(msg, this);
+    }
+    else {
+        qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
+        msgForm = new TFormFileMessage(msg, this);
+        connect(msgForm, SIGNAL(DownloadFile(int, QString)), this, SLOT(DownloadFileFromHost(int, QString)));
     }
 
-    qDebug() << "    Save to : " << _FileNameDownload;
-    _Data.clear();
-    QDataStream output(&_Data, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_2);
+    if (toBottom) {
+        _Layout->addWidget(msgForm);
+    }
+    else {
+        _Layout->insertWidget(0, msgForm);
+    }
+}
 
-    output << ETypeAction::DOWNLOAD_FROM_SERVER;
-    output << id;
+void TChatWindow::DownloaIterations()
+{
+    qDebug() << "   Downloading..";
+    QByteArray buf = _Socket->readAll();
+    _DataDownload.push_back(buf);
+    _FileByteSize -= buf.size();
 
-    _Socket->write(_Data);
+    qDebug() << "   File:" << buf.size() << " | " << _FileByteSize;
+    if (_FileByteSize <= 0) {
+        _Downloading = false;
+        qDebug() << "Finish downloading, size : " << _DataDownload.size();
+
+        QFile file(_FileNameDownload);
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(_DataDownload);
+            file.close();
+        }
+    }
 }
 
 void TChatWindow::SlotReadyRead()
@@ -193,24 +213,7 @@ void TChatWindow::SlotReadyRead()
     }
 
     if (_Downloading) {
-        qDebug() << "   Downloading..";
-        QByteArray buf = _Socket->readAll();
-        _DataDownload.push_back(buf);
-        _FileByteSize -= buf.size();
-
-        qDebug() << "   File:" << buf.size() << " | " << _FileByteSize;
-        if (_FileByteSize <= 0) {
-            _Downloading = false;
-            qDebug() << "Finish downloading, size : " << _DataDownload.size();
-
-            QFile file;
-            QString path = _FileNameDownload;
-            file.setFileName(path);
-            if (file.open(QIODevice::WriteOnly)) {
-                file.write(_DataDownload); // записываем данные в файл
-                file.close();
-            }
-        }
+        DownloaIterations();
         return;
     }
 
@@ -219,59 +222,37 @@ void TChatWindow::SlotReadyRead()
     if (typeAction == ETypeAction::MESSAGE) {
         TMessageData msg;
         input >> msg;
+        AddNewMessage(msg, true);
 
-        if (msg.Type == TMessageData::ETypeMessage::TEXT) {
-            qDebug() << "   MessageText <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-            auto* msgForm = new TTextMessage(msg, this);
-            _Layout->addWidget(msgForm);
-        }
-        else {
-            qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-            auto*  msgForm = new TFormFileMessage(msg, this);
-            _Layout->addWidget(msgForm);
-            connect(msgForm, SIGNAL(DownloadFile(int, QString)), this, SLOT(DownloadFileFromHost(int, QString)));
-        }
-
-        if (ui->scrollArea->verticalScrollBar()->maximum() - ui->scrollArea->verticalScrollBar()->value() < 80) {
-            QTimer::singleShot(50, this, &TChatWindow::on_pushButtonToBottom_clicked);
+        int maxH = ui->scrollArea->verticalScrollBar()->maximum();
+        int curH = ui->scrollArea->verticalScrollBar()->value();
+        if (maxH - curH < HEIGHT_AUTOMATIC_SCROLL_DOWN) {
+            QTimer::singleShot(TIME_AUTOMATIC_SCROLL_DOWN, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
     }
-    else if (typeAction == ETypeAction::MESSAGE_EARLY) {
+    else if (typeAction == ETypeAction::MESSAGE_HISTORY) {
         TMessagePack msgPack;
         input >> msgPack;
         qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd<< "(ind)";
 
-        for (int i = 0; i < msgPack.SizePack; i++) {
-            //auto* msgUi = new TTextMessage(msgPack.ArrMessage[i], this);
-            //_Layout->insertWidget(0, msgUi);
-            auto& msg = msgPack.ArrMessage[i];
-            if (msg.Type == TMessageData::ETypeMessage::TEXT) {
-                qDebug() << "   MessageText <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-                auto* msgForm = new TTextMessage(msg, this);
-                _Layout->insertWidget(0, msgForm);
-            }
-            else {
-                qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-                auto*  msgForm = new TFormFileMessage(msg, this);
-                _Layout->insertWidget(0, msgForm);
-                connect(msgForm, SIGNAL(DownloadFile(int, QString)), this, SLOT(DownloadFileFromHost(int, QString)));
-            }
+        for (const auto& msg : msgPack.ArrMessage) {
+            AddNewMessage(msg, false);
         }
 
-        int oldH = ui->scrollArea->verticalScrollBar()->maximum();
-        if (_CurInd == -1) {
-            QTimer::singleShot(100, this, &TChatWindow::on_pushButtonToBottom_clicked);
+        if (_CurInd < 0) {
+            QTimer::singleShot(TIME_AUTOMATIC_SCROLL_HISTORY, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
         else {
-            QTimer::singleShot(100, this, [this, oldH](){
+            int oldH = ui->scrollArea->verticalScrollBar()->maximum();
+            QTimer::singleShot(TIME_AUTOMATIC_SCROLL_HISTORY, this, [this, oldH](){
                 SetShiftHistory(oldH);
             });
         }
 
         _CurInd = msgPack.CurInd;
-        if (_CurInd != 0) {
+        if (_CurInd > 0) {
             _Button = new QPushButton("Раннее", this);
-            connect(_Button, SIGNAL(clicked()), this, SLOT(GetPackMessageEarly()));
+            connect(_Button, SIGNAL(clicked()), this, SLOT(GetHistoryPack()));
             _Layout->insertWidget(0, _Button);
         }
     }
@@ -284,50 +265,42 @@ void TChatWindow::SlotReadyRead()
     }
     else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
         _Downloading = true;
-        QString fileName;
         input >> _FileByteSize;
-        input >> fileName;
         _DataDownload.clear();
-
         qDebug() << "   Start download: " << _FileByteSize;
     }
 }
 
 void TChatWindow::on_pushButtonSend_clicked()
 {
-    if (HostExists()) {
-        SendMsgToServer();
-    }
+    on_lineEdit_returnPressed();
 }
 
-void TChatWindow::SetShiftHistory(int h)
+void TChatWindow::SetShiftHistory(int prevH)
 {
-    ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximum() - h);
-    qDebug() << ui->scrollArea->verticalScrollBar()->maximum() << h;
+    int newH = ui->scrollArea->verticalScrollBar()->maximum();
+    ui->scrollArea->verticalScrollBar()->setValue(newH - prevH);
 }
 
 void TChatWindow::on_pushButtonToBottom_clicked()
 {
-    ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximum());
+    int maxH = ui->scrollArea->verticalScrollBar()->maximum();
+    ui->scrollArea->verticalScrollBar()->setValue(maxH);
 }
 
 
 void TChatWindow::on_lineEdit_returnPressed()
 {
     if (HostExists()) {
-        SendMsgToServer();
+        TMessageData msg(_UserLogin, ui->lineEdit->text(), "", TMessageData::ETypeMessage::TEXT);
+        SendDataToServer(msg, ETypeAction::MESSAGE);
     }
 }
 
 
 void TChatWindow::on_pushButton_clicked()
 {
-    QString path = QFileDialog::getOpenFileName(
-                        this,
-                        "Open file",
-                        "../",
-                        "All files (*.*)"
-                    );
+    QString path = QFileDialog::getOpenFileName(this, "Open file", "../", "All files (*.*)");
     if (path.isEmpty()) {
         return;
     }

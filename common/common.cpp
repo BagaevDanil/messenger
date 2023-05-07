@@ -1,5 +1,34 @@
 #include "common.h"
 
+TDownloadFileIndo::TDownloadFileIndo(){}
+
+TDownloadFileIndo::TDownloadFileIndo(QString login, QString fileName, int fileSize)
+    : Login(login)
+    , FileName(fileName)
+    , FileSize(fileSize){}
+
+QDataStream& operator>> (QDataStream& in, TDownloadFileIndo& info)
+{
+    in >> info.Login;
+    in >> info.FileName;
+
+    QString str;
+    in >> str;
+    info.FileSize = str.toInt();
+
+    return in;
+}
+
+QDataStream& operator<< (QDataStream& out, TDownloadFileIndo& info)
+{
+    out << info.Login;
+    out << info.FileName;
+    out << QString::number(info.FileSize);
+    return out;
+}
+
+
+
 QDataStream& operator>> (QDataStream &in, TMessageData &msg)
 {
     in >> msg.Login;
