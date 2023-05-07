@@ -149,10 +149,10 @@ void TChatWindow::SlotReadyRead()
         }
         int oldH = ui->scrollArea->verticalScrollBar()->maximum();
         if (_CurInd == -1) {
-            QTimer::singleShot(70, this, &TChatWindow::on_pushButtonToBottom_clicked);
+            QTimer::singleShot(100, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
         else {
-            QTimer::singleShot(70, this, [this, oldH](){
+            QTimer::singleShot(100, this, [this, oldH](){
                 SetShiftHistory(oldH);
             });
         }
