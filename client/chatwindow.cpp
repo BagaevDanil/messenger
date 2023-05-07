@@ -166,6 +166,9 @@ void TChatWindow::DownloadFileFromHost(int id, QString fileName)
                         "../" + fileName,
                         "All files (*.*)"
                     );
+    if (_FileNameDownload.isEmpty()) {
+        return;
+    }
 
     qDebug() << "    Save to : " << _FileNameDownload;
     _Data.clear();
@@ -325,6 +328,9 @@ void TChatWindow::on_pushButton_clicked()
                         "../",
                         "All files (*.*)"
                     );
+    if (path.isEmpty()) {
+        return;
+    }
     SendFileToServer(path);
 }
 
