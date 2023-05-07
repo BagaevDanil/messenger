@@ -21,7 +21,7 @@ bool TChatWindow::HostExists()
     Connected = ConnectToHost();
     while (!Connected) {
         qDebug() << "-Try connect to HOST";
-        auto answer = QMessageBox::question(this, "Ошибка соедениния!", "Повторить попытку?");
+        auto answer = QMessageBox::question(nullptr, "Ошибка соедениния!", "Повторить попытку?");
         if (answer == QMessageBox::StandardButton::No) {
             qDebug() << "   Cancel connect to HOST";
             return false;
@@ -58,6 +58,7 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     , _UserLogin(userLogin)
     , _Button(nullptr)
     , _Downloading(false)
+    , Connected(false)
 {
     ui->setupUi(this);
 
@@ -70,7 +71,12 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
 
     connect(ui->scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(ChangeVericalScroll(int)));
 
-    Connected = ConnectToHost();
+    // Connected = ConnectToHost();
+    HostExists();
+    if (!Connected) {
+        throw std::logic_error("No connection");
+    }
+    SendDataToServer(_CurInd, ETypeAction::MESSAGE_HISTORY);
 }
 
 void TChatWindow::ChangeVericalScroll(int value)
@@ -260,11 +266,9 @@ void TChatWindow::SlotReadyRead()
         }
     }
     else if (typeAction == ETypeAction::CHECK_CONNECTION) {
-        QDataStream input(_Socket);
-        input.setVersion(QDataStream::Qt_6_2);
-        QString s;
-        input >> s;
-        qDebug() << "   Check connection : " << s;
+        QByteArray buf = _Socket->readAll();
+        QString ans(buf);
+        qDebug() << "   Check connection : " << ans;
     }
     else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
         _Downloading = true;

@@ -33,7 +33,7 @@ void TServer::incomingConnection(qintptr socketDescriptor)
     _ArrSocket.insert(socket);
     mapDownloadData.insert(socketDescriptor, DataDownloadFileUser());
 
-    //
+    /*
     TMessagePack msgPack;
     if (_ArrMessage.empty()) {
         msgPack.SizePack = 0;
@@ -49,6 +49,8 @@ void TServer::incomingConnection(qintptr socketDescriptor)
         msgPack.ArrMessage.push_back(_ArrMessage[i]);
     }
     SendPackToClient(msgPack);
+    */
+    SendToClient("200ok", ETypeAction::CHECK_CONNECTION);
 }
 
 template <class T>
@@ -172,6 +174,10 @@ void TServer::SlotReadyRead()
     else if (typeAction == ETypeAction::MESSAGE_HISTORY) {
         int ind;
         input >> ind;
+
+        if (ind < 0) {
+            ind = _ArrMessage.size();
+        }
 
         TMessagePack msgPack;
         msgPack.SizePack = std::min(ind, SIZE_PACK);
