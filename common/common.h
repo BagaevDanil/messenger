@@ -9,6 +9,7 @@ enum ETypeAction {
     MESSAGE,
     CHECK_CONNECTION,
     MESSAGE_EARLY,
+    MESSAGE_FILE,
 };
 
 namespace HOST {

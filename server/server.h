@@ -3,6 +3,7 @@
 
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QMap>
 #include "../common/common.h"
 
 class TServer: public QTcpServer
@@ -16,11 +17,27 @@ public:
 
 public:
     QTcpSocket* socket;
+    struct DataDownloadFileUser {
+        bool _Downloading;
+        int  _FileByteSize;
+        QByteArray _DataDownload;
+        QString _FileNameDownload;
+
+        DataDownloadFileUser()
+            : _Downloading(false){}
+    };
 
 private:
      QSet<QTcpSocket*> _ArrSocket;
      QByteArray _Data;
      QVector<TMessageData> _ArrMessage;
+
+     //bool _Downloading;
+     //int  _FileByteSize;
+     //QByteArray _DataDownload;
+     //QString _FileNameDownload;
+
+     QMap<int, DataDownloadFileUser> mapDownloadData;
 
      template <class T>
      void SendToClient(T msg, ETypeAction typeAction = MESSAGE);

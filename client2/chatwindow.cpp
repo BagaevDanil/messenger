@@ -130,11 +130,11 @@ void TChatWindow::SendFileToServer(QString fileName)
         output.setVersion(QDataStream::Qt_6_2);
 
         byteArray = sendFile->readAll();
-        QString fileName = QFileInfo(*sendFile).fileName();
-        qDebug() << "   File: " << fileName << byteArray.size();
+        QString suf = QFileInfo(*sendFile).suffix();
+        qDebug() << "   File: " << suf << byteArray.size();
 
         output << ETypeAction::MESSAGE_FILE;
-        output << fileName;
+        output << suf;
         output << int(byteArray.size());
         _Socket->write(_Data);
     }

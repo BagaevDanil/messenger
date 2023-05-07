@@ -1,5 +1,6 @@
 #include "server.h"
 #include <QTime>
+#include <QFile>
 
 int SIZE_PACK = 10;
 
@@ -29,6 +30,7 @@ void TServer::incomingConnection(qintptr socketDescriptor)
 
     qDebug() << "-New client connected : " << socketDescriptor;
     _ArrSocket.insert(socket);
+    mapDownloadData.insert(socketDescriptor, DataDownloadFileUser());
 
     //
     TMessagePack msgPack;
@@ -101,13 +103,36 @@ bool TServer::UserVerification(QString login, QString pass)
 
 void TServer::SlotReadyRead()
 {
-    qDebug() << "-Ans for CLIENT :";
     socket = (QTcpSocket*)sender();
+    int userDescr = socket->socketDescriptor();
+    qDebug() << "-Ans for CLIENT <" << userDescr << "> :";
     QDataStream input(socket);
     input.setVersion(QDataStream::Qt_6_2);
 
     if (input.status() != QDataStream::Ok) {
         qDebug() << "   Error read!";
+        return;
+    }
+
+    if (mapDownloadData[userDescr]._Downloading) {
+        qDebug() << "   Downloading..";
+        QByteArray buf = socket->readAll();
+        mapDownloadData[userDescr]._DataDownload.push_back(buf);
+        mapDownloadData[userDescr]._FileByteSize -= buf.size();
+
+        qDebug() << "   File:" << buf.size() << " | " << mapDownloadData[userDescr]._FileByteSize;
+        if (mapDownloadData[userDescr]._FileByteSize <= 0) {
+            mapDownloadData[userDescr]._Downloading = false;
+            qDebug() << "Finish downloading, size : " << mapDownloadData[userDescr]._DataDownload.size();
+
+            QFile file;
+            QString path = "C:\\Users\\Danil\\github\\messenger\\result_" + mapDownloadData[userDescr]._FileNameDownload;
+            file.setFileName(path);
+            if (file.open(QIODevice::WriteOnly)) {
+                file.write(mapDownloadData[userDescr]._DataDownload); // записываем данные в файл
+                file.close();
+            }
+        }
         return;
     }
 
@@ -154,6 +179,13 @@ void TServer::SlotReadyRead()
             msgPack.ArrMessage.push_back(_ArrMessage[i]);
         }
         SendToClient(msgPack, ETypeAction::MESSAGE_EARLY);
+    }
+    else if (typeAction == ETypeAction::MESSAGE_FILE) {
+        mapDownloadData[userDescr]._Downloading = true;
+        input >> mapDownloadData[userDescr]._FileNameDownload;
+        input >> mapDownloadData[userDescr]._FileByteSize;
+        mapDownloadData[userDescr]._DataDownload.clear();
+        qDebug() << "   Start down: " << mapDownloadData[userDescr]._FileByteSize;
     }
 }
 
