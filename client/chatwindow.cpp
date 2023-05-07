@@ -2,6 +2,7 @@
 #include "ui_chatwindow.h"
 #include "../common/common.h"
 #include "textmessage.h"
+#include "formfilemessage.h"
 #include <QScrollBar>
 #include <QTimer>
 #include <QFile>
@@ -52,6 +53,7 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     , _CurInd(-1)
     , _UserLogin(userLogin)
     , _Button(nullptr)
+    , _Downloading(false)
 {
     ui->setupUi(this);
 
@@ -109,7 +111,7 @@ void TChatWindow::SendMsgToServer()
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
 
-    TMessageData msg(_UserLogin, ui->lineEdit->text(), "0");
+    TMessageData msg(_UserLogin, ui->lineEdit->text(), "0", TMessageData::ETypeMessage::TEXT);
     output << ETypeAction::MESSAGE;
     output << msg;
 
@@ -134,6 +136,7 @@ void TChatWindow::SendFileToServer(QString fileName)
         qDebug() << "   File: " << fileName << byteArray.size();
 
         output << ETypeAction::MESSAGE_FILE;
+        output << _UserLogin;
         output << fileName;
         output << int(byteArray.size());
         _Socket->write(_Data);
@@ -153,6 +156,28 @@ void TChatWindow::SendFileToServer(QString fileName)
     });
 }
 
+void TChatWindow::DownloadFileFromHost(int id, QString fileName)
+{
+    qDebug() << "Download File From Host : " << id;
+
+    _FileNameDownload = QFileDialog::getSaveFileName(
+                        this,
+                        "Open file",
+                        "../" + fileName,
+                        "All files (*.*)"
+                    );
+
+    qDebug() << "    Save to : " << _FileNameDownload;
+    _Data.clear();
+    QDataStream output(&_Data, QIODevice::WriteOnly);
+    output.setVersion(QDataStream::Qt_6_2);
+
+    output << ETypeAction::DOWNLOAD_FROM_SERVER;
+    output << id;
+
+    _Socket->write(_Data);
+}
+
 void TChatWindow::SlotReadyRead()
 {
     qDebug() << "-Ans for HOST :";
@@ -164,15 +189,46 @@ void TChatWindow::SlotReadyRead()
         return;
     }
 
+    if (_Downloading) {
+        qDebug() << "   Downloading..";
+        QByteArray buf = _Socket->readAll();
+        _DataDownload.push_back(buf);
+        _FileByteSize -= buf.size();
+
+        qDebug() << "   File:" << buf.size() << " | " << _FileByteSize;
+        if (_FileByteSize <= 0) {
+            _Downloading = false;
+            qDebug() << "Finish downloading, size : " << _DataDownload.size();
+
+            QFile file;
+            QString path = _FileNameDownload;
+            file.setFileName(path);
+            if (file.open(QIODevice::WriteOnly)) {
+                file.write(_DataDownload); // записываем данные в файл
+                file.close();
+            }
+        }
+        return;
+    }
+
     int typeAction;
     input >> typeAction;
     if (typeAction == ETypeAction::MESSAGE) {
         TMessageData msg;
         input >> msg;
-        qDebug() << "   Message <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
 
-        auto* msgUi = new TTextMessage(msg, this);
-        _Layout->addWidget(msgUi);
+        if (msg.Type == TMessageData::ETypeMessage::TEXT) {
+            qDebug() << "   MessageText <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
+            auto* msgForm = new TTextMessage(msg, this);
+            _Layout->addWidget(msgForm);
+        }
+        else {
+            qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
+            auto*  msgForm = new TFormFileMessage(msg, this);
+            _Layout->addWidget(msgForm);
+            connect(msgForm, SIGNAL(DownloadFile(int, QString)), this, SLOT(DownloadFileFromHost(int, QString)));
+        }
+
         if (ui->scrollArea->verticalScrollBar()->maximum() - ui->scrollArea->verticalScrollBar()->value() < 80) {
             QTimer::singleShot(50, this, &TChatWindow::on_pushButtonToBottom_clicked);
         }
@@ -183,9 +239,22 @@ void TChatWindow::SlotReadyRead()
         qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd<< "(ind)";
 
         for (int i = 0; i < msgPack.SizePack; i++) {
-            auto* msgUi = new TTextMessage(msgPack.ArrMessage[i], this);
-            _Layout->insertWidget(0, msgUi);
+            //auto* msgUi = new TTextMessage(msgPack.ArrMessage[i], this);
+            //_Layout->insertWidget(0, msgUi);
+            auto& msg = msgPack.ArrMessage[i];
+            if (msg.Type == TMessageData::ETypeMessage::TEXT) {
+                qDebug() << "   MessageText <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
+                auto* msgForm = new TTextMessage(msg, this);
+                _Layout->insertWidget(0, msgForm);
+            }
+            else {
+                qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
+                auto*  msgForm = new TFormFileMessage(msg, this);
+                _Layout->insertWidget(0, msgForm);
+                connect(msgForm, SIGNAL(DownloadFile(int, QString)), this, SLOT(DownloadFileFromHost(int, QString)));
+            }
         }
+
         int oldH = ui->scrollArea->verticalScrollBar()->maximum();
         if (_CurInd == -1) {
             QTimer::singleShot(100, this, &TChatWindow::on_pushButtonToBottom_clicked);
@@ -210,6 +279,15 @@ void TChatWindow::SlotReadyRead()
         input >> s;
         qDebug() << "   Check connection : " << s;
     }
+    else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
+        _Downloading = true;
+        QString fileName;
+        input >> _FileByteSize;
+        input >> fileName;
+        _DataDownload.clear();
+
+        qDebug() << "   Start download: " << _FileByteSize;
+    }
 }
 
 void TChatWindow::on_pushButtonSend_clicked()
@@ -229,7 +307,6 @@ void TChatWindow::on_pushButtonToBottom_clicked()
 {
     ui->scrollArea->verticalScrollBar()->setValue(ui->scrollArea->verticalScrollBar()->maximum());
 }
-
 
 
 void TChatWindow::on_lineEdit_returnPressed()

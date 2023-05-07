@@ -22,15 +22,22 @@ public:
         int  _FileByteSize;
         QByteArray _DataDownload;
         QString _FileNameDownload;
+        QString UserLogin;
 
         DataDownloadFileUser()
             : _Downloading(false){}
+    };
+
+    struct TFile{
+        QByteArray Data;
+        QString Name;
     };
 
 private:
      QSet<QTcpSocket*> _ArrSocket;
      QByteArray _Data;
      QVector<TMessageData> _ArrMessage;
+     QVector<TFile> _ArrFile;
 
      //bool _Downloading;
      //int  _FileByteSize;
@@ -45,6 +52,8 @@ private:
      void SendPackToClient(TMessagePack msgPack);
      void SendMsgToClient(TMessageData msg, ETypeAction typeAction = MESSAGE);
      bool UserVerification(QString login, QString pass);
+     void SendFileToClient(QTcpSocket* socket, int fileId);
+
 
 
 public slots:  

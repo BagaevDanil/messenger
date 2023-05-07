@@ -13,6 +13,7 @@ SOURCES += \
     ../common/common.cpp \
     authorizationwindow.cpp \
     chatwindow.cpp \
+    formfilemessage.cpp \
     main.cpp \
     textmessage.cpp
 
@@ -20,11 +21,13 @@ HEADERS += \
     ../common/common.h \
     authorizationwindow.h \
     chatwindow.h \
+    formfilemessage.h \
     textmessage.h
 
 FORMS += \
     authorizationwindow.ui \
     chatwindow.ui \
+    formfilemessage.ui \
     textmessage.ui
 
 # Default rules for deployment.

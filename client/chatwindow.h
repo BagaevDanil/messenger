@@ -23,12 +23,10 @@ public:
 
 private slots:
     void on_pushButtonSend_clicked();
-
     void on_pushButtonToBottom_clicked();
-
     void on_lineEdit_returnPressed();
-
     void on_pushButton_clicked();
+    void DownloadFileFromHost(int id, QString fileName);
 
 private:
     Ui::TChatWindow *ui;
@@ -41,6 +39,11 @@ private:
     QVBoxLayout* _Layout;
     QWidget* _Container;
     QPushButton* _Button;
+
+    bool _Downloading;
+    int  _FileByteSize;
+    QByteArray _DataDownload;
+    QString _FileNameDownload;
 
 public slots:
     void SlotReadyRead();

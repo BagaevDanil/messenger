@@ -10,6 +10,7 @@ enum ETypeAction {
     CHECK_CONNECTION,
     MESSAGE_EARLY,
     MESSAGE_FILE,
+    DOWNLOAD_FROM_SERVER,
 };
 
 namespace HOST {
@@ -19,13 +20,21 @@ namespace HOST {
 
 class TMessageData {
 public:
+    enum ETypeMessage {
+        TEXT,
+        FILE,
+    };
+
+public:
     TMessageData();
-    TMessageData(QString Login, QString Text, QString Time);
+    TMessageData(QString login, QString text, QString time, ETypeMessage type);
 
 public:
     QString Login;
     QString Text;
     QString Time;
+    ETypeMessage Type;
+    int FileId;
 
     friend QDataStream& operator>> (QDataStream& in, TMessageData& msg);
     friend QDataStream& operator<< (QDataStream &out, TMessageData &msg);
