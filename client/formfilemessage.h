@@ -2,6 +2,7 @@
 #define FORMFILEMESSAGE_H
 
 #include <QWidget>
+#include <QProgressBar>
 #include "../common/common.h"
 
 namespace Ui {
@@ -15,9 +16,15 @@ class TFormFileMessage : public QWidget
 public:
     explicit TFormFileMessage(TMessageData msg, QWidget *parent = nullptr);
     ~TFormFileMessage();
+    const int& GetFileID();
+    const QString& GetFileName();
+    QProgressBar* GetProgressBar();
+    void FinishDownload();
+    void UpdateDownload(int size);
+    void StartDownload(int fileSize);
 
 signals:
-    void DownloadFile(int id, QString fileName);
+    void DownloadFile(TFormFileMessage* file);
 
 private slots:
     void PushButton();

@@ -1,7 +1,6 @@
 #include "chatwindow.h"
 #include "ui_chatwindow.h"
 #include "textmessage.h"
-#include "formfilemessage.h"
 #include <QScrollBar>
 #include <QTimer>
 #include <QFile>
@@ -9,7 +8,7 @@
 
 int HEIGHT_AUTOMATIC_SCROLL_DOWN = 80;
 int TIME_AUTOMATIC_SCROLL_DOWN = 50;
-int TIME_AUTOMATIC_SCROLL_HISTORY = 100;
+int TIME_AUTOMATIC_SCROLL_HISTORY = 80;
 int TIME_PAUSE_BEFORE_DOWNLOAD = 300;
 int BYTE_DOWNLOAD_PACK_SIZE = 32768;
 
@@ -63,6 +62,7 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     ui->setupUi(this);
 
     ui->scrollArea->setWidgetResizable(true);
+    ui->pushButtonToBottom->setVisible(false);
 
     _Container = new QWidget();
     ui->scrollArea->setWidget(_Container);
@@ -75,7 +75,7 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
 
 void TChatWindow::ChangeVericalScroll(int value)
 {
-    if (ui->scrollArea->verticalScrollBar()->maximum() - value > 100) {
+    if (ui->scrollArea->verticalScrollBar()->maximum() - value > HEIGHT_AUTOMATIC_SCROLL_DOWN) {
         ui->pushButtonToBottom->setVisible(true);
     }
     else {
@@ -146,17 +146,18 @@ void TChatWindow::SendFileToServer(QString fileName)
     });
 }
 
-void TChatWindow::DownloadFileFromHost(int fileId, QString fileName)
+void TChatWindow::DownloadFileFromHost(TFormFileMessage* file)
 {
-    qDebug() << "Download File From Host : " << fileId;
+    qDebug() << "Download File From Host : " << file->GetFileID();
     _FileNameDownload = QFileDialog::getSaveFileName(
                         this,
                         "Open file",
-                        "../" + fileName,
+                        "../" + file->GetFileName(),
                         "All files (*.*)"
                     );
     if (!_FileNameDownload.isEmpty()) {
-        SendDataToServer(fileId, ETypeAction::DOWNLOAD_FROM_SERVER);
+        _FormFile = file;
+        SendDataToServer(file->GetFileID(), ETypeAction::DOWNLOAD_FROM_SERVER);
     }
 }
 
@@ -170,7 +171,7 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
     else {
         qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
         msgForm = new TFormFileMessage(msg, this);
-        connect(msgForm, SIGNAL(DownloadFile(int, QString)), this, SLOT(DownloadFileFromHost(int, QString)));
+        connect(msgForm, SIGNAL(DownloadFile(TFormFileMessage*)), this, SLOT(DownloadFileFromHost(TFormFileMessage*)));
     }
 
     if (toBottom) {
@@ -187,10 +188,12 @@ void TChatWindow::DownloaIterations()
     QByteArray buf = _Socket->readAll();
     _DataDownload.push_back(buf);
     _FileByteSize -= buf.size();
+    _FormFile->UpdateDownload(buf.size());
 
     qDebug() << "   File:" << buf.size() << " | " << _FileByteSize;
     if (_FileByteSize <= 0) {
         _Downloading = false;
+        _FormFile->FinishDownload();
         qDebug() << "Finish downloading, size : " << _DataDownload.size();
 
         QFile file(_FileNameDownload);
@@ -267,6 +270,7 @@ void TChatWindow::SlotReadyRead()
         _Downloading = true;
         input >> _FileByteSize;
         _DataDownload.clear();
+        _FormFile->StartDownload(_FileByteSize);
         qDebug() << "   Start download: " << _FileByteSize;
     }
 }

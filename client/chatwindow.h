@@ -5,7 +5,9 @@
 #include <QTcpSocket>
 #include <QMessageBox>
 #include <QVBoxLayout>
+#include <QProgressBar>
 #include "../common/common.h"
+#include "formfilemessage.h"
 
 namespace Ui {
 class TChatWindow;
@@ -27,7 +29,7 @@ private slots:
     void on_pushButtonToBottom_clicked();
     void on_lineEdit_returnPressed();
     void on_pushButton_clicked();
-    void DownloadFileFromHost(int id, QString fileName);
+    void DownloadFileFromHost(TFormFileMessage* file);
 
 private:
     Ui::TChatWindow *ui;
@@ -44,6 +46,7 @@ private:
     int  _FileByteSize;
     QByteArray _DataDownload;
     QString _FileNameDownload;
+    TFormFileMessage* _FormFile;
 
     void AddNewMessage(TMessageData msg, bool toBottom);
     void DownloaIterations();
