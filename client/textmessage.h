@@ -15,7 +15,7 @@ class TTextMessage : public QWidget
 
 public:
     TTextMessage(QString login, QString text, QString time, QWidget *parent = nullptr);
-    TTextMessage(TMessageData msg, QWidget *parent = nullptr);
+    TTextMessage(TMessageData msg, bool isMyMsg, QWidget *parent = nullptr);
     ~TTextMessage();
 
 public slots:

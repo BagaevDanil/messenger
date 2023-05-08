@@ -2,22 +2,28 @@
 #include "ui_textmessage.h"
 #include <QTimer>
 #include <QScrollBar>
+#include <QSpacerItem>
 
-TTextMessage::TTextMessage(TMessageData msg, QWidget *parent)
+TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TTextMessage)
 {
     ui->setupUi(this);
 
-    // ui->labelText->setText(msg.Text);
     ui->labelLogin->setText(msg.Login);
     ui->labelTime->setText(msg.Time);
 
     ui->textEdit->setText(msg.Text);
     QTimer::singleShot(2, this, &TTextMessage::onTextChanged);
 
-    //ui->textEdit->adjustSize();
-    //ui->textEdit->setVisible(false);
+    ui->horizontalLayout->removeItem(ui->horizontalSpacer);
+    if (isMyMsg) {
+        ui->horizontalLayout->insertSpacerItem(0, ui->horizontalSpacer);
+    }
+    else {
+        ui->horizontalLayout->addSpacerItem(ui->horizontalSpacer);
+    }
+
 }
 
 void TTextMessage::onTextChanged()

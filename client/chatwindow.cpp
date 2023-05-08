@@ -170,9 +170,10 @@ void TChatWindow::DownloadFileFromHost(TFormFileMessage* file)
 void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
 {
     QWidget* msgForm;
+    bool isMyMsg = msg.Login == _UserLogin;
     if (msg.Type == TMessageData::ETypeMessage::TEXT) {
         qDebug() << "   MessageText <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-        msgForm = new TTextMessage(msg, this);
+        msgForm = new TTextMessage(msg, isMyMsg, this);
     }
     else {
         qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
