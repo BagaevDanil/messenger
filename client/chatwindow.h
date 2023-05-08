@@ -6,6 +6,7 @@
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QProgressBar>
+#include <QMutex>
 #include "../common/common.h"
 #include "formfilemessage.h"
 
@@ -44,11 +45,14 @@ private:
     QWidget* _Container;
     QPushButton* _Button;
 
+public:
     bool _Downloading;
     int  _FileByteSize;
     QByteArray _DataDownload;
     QString _FileNameDownload;
     TFormFileMessage* _FormFile;
+    QMutex _Mutex;
+
 
     void AddNewMessage(TMessageData msg, bool toBottom);
     void DownloaIterations();

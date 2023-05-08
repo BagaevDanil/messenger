@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QFile>
 #include <QFileDialog>
+#include <QtConcurrent/QtConcurrent>
 
 int HEIGHT_AUTOMATIC_SCROLL_DOWN = 80;
 int TIME_AUTOMATIC_SCROLL_DOWN = 50;
@@ -229,6 +230,36 @@ void TChatWindow::DownloaIterations()
     }
 }
 
+void DownloaIterationsThread(
+        QTcpSocket* _SocketDownload,
+        bool* _Downloading,
+        int* _FileByteSize,
+        QByteArray* _DataDownload,
+        QString* _FileNameDownload,
+        TFormFileMessage* _FormFile,
+        QMutex* _Mutex
+    ){
+    QMutexLocker locker(_Mutex);
+    qDebug() << "   Downloading..";
+    QByteArray buf = _SocketDownload->readAll();
+    _DataDownload->push_back(buf);
+    *_FileByteSize -= buf.size();
+    _FormFile->UpdateDownload(buf.size());
+
+    qDebug() << "   File:" << buf.size() << " | " << *_FileByteSize;
+    if (*_FileByteSize <= 0) {
+        *_Downloading = false;
+        _FormFile->FinishDownload();
+        qDebug() << "Finish downloading, size : " << _DataDownload->size();
+
+        QFile file(*_FileNameDownload);
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(*_DataDownload);
+            file.close();
+        }
+    }
+}
+
 void TChatWindow::SlotReadyRead()
 {
     auto* socket = (QTcpSocket*)sender();
@@ -243,7 +274,17 @@ void TChatWindow::SlotReadyRead()
     }
 
     if (_Downloading) {
-        DownloaIterations();
+        QFuture<void> future = QtConcurrent::run(
+                    DownloaIterationsThread,
+                    _SocketDownload,
+                    &_Downloading,
+                    &_FileByteSize,
+                    &_DataDownload,
+                    &_FileNameDownload,
+                    _FormFile,
+                    &_Mutex
+        );
+        // DownloaIterations();
         return;
     }
 
