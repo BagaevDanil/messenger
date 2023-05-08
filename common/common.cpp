@@ -1,5 +1,27 @@
 #include "common.h"
 
+TUserInfo::TUserInfo(){}
+
+TUserInfo::TUserInfo(QString login, QString password)
+    : Login(login)
+    , Password(password){}
+
+QDataStream& operator>> (QDataStream& in, TUserInfo& info)
+{
+    in >> info.Login;
+    in >> info.Password;
+    return in;
+}
+
+QDataStream& operator<< (QDataStream& out, TUserInfo& info)
+{
+    out << info.Login;
+    out << info.Password;
+    return out;
+}
+
+
+
 TDownloadFileIndo::TDownloadFileIndo(){}
 
 TDownloadFileIndo::TDownloadFileIndo(QString login, QString fileName, int fileSize)

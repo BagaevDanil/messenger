@@ -6,6 +6,7 @@
 
 enum ETypeAction {
     AUTHORIZATION,
+    REGISTRATION,
     MESSAGE,
     CHECK_CONNECTION,
     MESSAGE_HISTORY,
@@ -13,11 +14,29 @@ enum ETypeAction {
     DOWNLOAD_FROM_SERVER,
 };
 
+enum ETypeAnsRegistration {
+    OK,
+    LOGIN_BUSY,
+    UNKNOWN_ERROR,
+};
+
 namespace HOST {
     const QString ADDRES = "127.0.0.1";
     const int PORT = 1234;
 };
 
+
+struct TUserInfo {
+    QString Login;
+    QString Password;
+
+public:
+    TUserInfo();
+    TUserInfo(QString login, QString password);
+
+    friend QDataStream& operator>> (QDataStream& in, TUserInfo& msg);
+    friend QDataStream& operator<< (QDataStream& out, TUserInfo& msg);
+};
 
 struct TDownloadFileIndo {
     QString Login;

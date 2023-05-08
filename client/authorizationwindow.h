@@ -5,6 +5,7 @@
 #include <QTcpSocket>
 #include <QMessageBox>
 #include "chatwindow.h"
+#include "../common/common.h"
 
 namespace Ui {
 class TAuthorizationWindow;
@@ -17,8 +18,12 @@ class TAuthorizationWindow : public QMainWindow
 public:
     explicit TAuthorizationWindow(QWidget *parent = nullptr);
     ~TAuthorizationWindow();
-    void HostExists();
+    bool HostExists();
     bool ConnectToHost();
+
+    template<class TypeData>
+    void SendDataToServer(TypeData data, ETypeAction action);
+
 
 
 private:
@@ -26,6 +31,7 @@ private:
     QTcpSocket* _Socket;
     QByteArray _Data;
     void AuthorizationServer();
+    void RegistrationServer();
     bool Connected;
 
 public slots:
@@ -34,6 +40,9 @@ public slots:
 
 private slots:
     void on_pushButtonAuthorization_clicked();
+    void on_pushButtonAddNewUser_clicked();
+    void on_pushButtonRegistrationPadge_clicked();
+    void on_pushButtonAuthorizationPadge_clicked();
 };
 
 #endif // AUTHORIZATIONWINDOW_H

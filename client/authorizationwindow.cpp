@@ -1,23 +1,30 @@
 #include "authorizationwindow.h"
 #include "ui_authorizationwindow.h"
+#include <QMessageBox>
 
-#include "../common/common.h"
+enum ETypePadge {
+    AUTHORIZATION_PADGE,
+    REGISTRATION_PADGE,
+};
 
-void TAuthorizationWindow::HostExists()
+bool TAuthorizationWindow::HostExists()
 {
-    if (!Connected) {
-        Connected = ConnectToHost();
+    if (Connected) {
+        return true;
     }
 
+    Connected = ConnectToHost();
     while (!Connected) {
-        auto answer = QMessageBox::question(this, "Ошибка соедениния!", "Повторить попытку?");
+        qDebug() << "-Try connect to HOST";
+        auto answer = QMessageBox::question(nullptr, "Ошибка соедениния!", "Повторить попытку?");
         if (answer == QMessageBox::StandardButton::No) {
-            return;
+            qDebug() << "   Cancel connect to HOST";
+            return false;
         }
-        qDebug() << "Try connect...";
         Connected = ConnectToHost();
     }
-    qDebug() << "Connected!";
+    qDebug() << "   Successfully connected";
+    return false;
 }
 
 bool TAuthorizationWindow::ConnectToHost()
@@ -31,18 +38,8 @@ bool TAuthorizationWindow::ConnectToHost()
     _Socket->connectToHost(HOST::ADDRES, HOST::PORT);
 
     if (_Socket->waitForConnected()) {
-        _Data.clear();
-        QDataStream output(&_Data, QIODevice::WriteOnly);
-        output.setVersion(QDataStream::Qt_6_2);
-
-        output << ETypeAction::CHECK_CONNECTION;
-        _Socket->write(_Data);
-
         if (_Socket->waitForReadyRead()) {
-            QByteArray bytes = _Socket->readAll();
-            if (bytes.contains("")) { // 200 OK
-                return true;
-            }
+            return true;
         }
     }
     return false;
@@ -69,20 +66,45 @@ TAuthorizationWindow::~TAuthorizationWindow()
     delete ui;
 }
 
-void TAuthorizationWindow::AuthorizationServer()
+template<class TypeData>
+void TAuthorizationWindow::SendDataToServer(TypeData data, ETypeAction action)
 {
     _Data.clear();
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
 
-    QString login = ui->lineEditLogin->text();
-    QString pass = ui->lineEditPassword->text();
-    output << ETypeAction::AUTHORIZATION;
-    output << login;
-    output << pass;
+    output << action;
+    output << data;
 
     _Socket->write(_Data);
 }
+
+void TAuthorizationWindow::AuthorizationServer()
+{
+    QString login = ui->lineEditLogin->text();
+    QString pass = ui->lineEditPassword->text();
+    TUserInfo user(login, pass);
+
+    SendDataToServer(user, ETypeAction::AUTHORIZATION);
+}
+
+void TAuthorizationWindow::RegistrationServer()
+{
+
+    QString login = ui->lineEditNewLogin->text();
+
+    QString pass = ui->lineEditNewPassword->text();
+    QString passRepeat = ui->lineEditNewPasswordRepeat->text();
+
+    if (pass != passRepeat) {
+        QMessageBox::critical(this, "Ошибка", "Пароли не совпадают");
+        return;
+    }
+
+    TUserInfo user(login, pass);
+    SendDataToServer(user, ETypeAction::REGISTRATION);
+}
+
 
 void TAuthorizationWindow::SlotReadyRead()
 {
@@ -99,23 +121,69 @@ void TAuthorizationWindow::SlotReadyRead()
     if (typeAction == ETypeAction::AUTHORIZATION) {
         QString login;
         input >> login;
+        qDebug() << "   Authorization try";
+
         if (login == "") {
-            qDebug() << "Uncorrected pass or login";
+            qDebug() << "   Uncorrected pass or login";
+            QMessageBox::critical(this, "Ошибка входа", "Неверный логин или пароль");
             return;
         }
+        qDebug() << "   Successful log in";
 
-        qDebug() << "Authorization :" << login;
+        // Try
         TChatWindow* chatWindow = new TChatWindow(login);
         chatWindow->show();
 
         _Socket->disconnect();
         this->close();
     }
+    else if (typeAction == ETypeAction::CHECK_CONNECTION) {
+        QString ans;
+        input >> ans;
+        qDebug() << "Check connection : " << ans;
+    }
+    else if (typeAction == ETypeAction::REGISTRATION) {
+        ETypeAnsRegistration ans;
+        input >> ans;
+        if (ans == ETypeAnsRegistration::OK) {
+            QMessageBox::information(this, "Регистрация", "Новый пользователь успешно добавлен");
+        }
+        else if (ans == ETypeAnsRegistration::LOGIN_BUSY) {
+            QMessageBox::information(this, "Регистрация", "Логин занят");
+        }
+        else if (ans == ETypeAnsRegistration::OK) {
+            QMessageBox::information(this, "Регистрация", "Неизвестная ошибка на сервере\nПовторите попытку позже");
+        }
+    }
+    else {
+        qDebug() << "No Action?";
+        QByteArray buf = _Socket->readAll();
+    }
 }
 
 void TAuthorizationWindow::on_pushButtonAuthorization_clicked()
 {
-    HostExists();
-    AuthorizationServer();
+    if (HostExists()) {
+        AuthorizationServer();
+    }
+}
+
+
+void TAuthorizationWindow::on_pushButtonAddNewUser_clicked()
+{
+    if (HostExists()) {
+        RegistrationServer();
+    }
+}
+
+void TAuthorizationWindow::on_pushButtonRegistrationPadge_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(ETypePadge::REGISTRATION_PADGE);
+}
+
+
+void TAuthorizationWindow::on_pushButtonAuthorizationPadge_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(ETypePadge::AUTHORIZATION_PADGE);
 }
 

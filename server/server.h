@@ -4,6 +4,7 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QMap>
+#include <QSqlDatabase>
 #include "../common/common.h"
 
 class TServer: public QTcpServer
@@ -38,6 +39,7 @@ private:
      QByteArray _Data;
      QVector<TMessageData> _ArrMessage;
      QVector<TFile> _ArrFile;
+     QSqlDatabase _DB;
 
      //bool _Downloading;
      //int  _FileByteSize;
@@ -53,6 +55,8 @@ private:
      void SendMsgToClient(TMessageData msg, ETypeAction typeAction = MESSAGE);
      bool UserVerification(QString login, QString pass);
      void SendFileToClient(QTcpSocket* socket, int fileId);
+     ETypeAnsRegistration UserRegistration(QString login, QString pass);
+     bool CheckingLoginAvailability(QString login);
 
 
 

@@ -2,10 +2,35 @@
 #include <QTime>
 #include <QTimer>
 #include <QFile>
+#include <QSqlQuery>
+#include <QSqlError>
+
 
 int SIZE_PACK = 10;
 
-TServer::TServer(){}
+TServer::TServer()
+{
+    _DB = QSqlDatabase::addDatabase("QSQLITE");
+    _DB.setDatabaseName("../messenger.db");
+    if (!_DB.open()) {
+        qDebug() << "-Error DB";
+        return;
+    }
+    qDebug() << "-Connect to DB";
+    QSqlQuery* query = new QSqlQuery(_DB);
+    //query->exec("CREATE TABLE Users(Login TEXT, Password TEXT)");
+
+    /*query->prepare("INSERT INTO Users (Login, Password) VALUES (:login, :pass)");
+    query->bindValue(":login", "Danil");
+    query->bindValue(":pass", "qwert");
+    bool result = query->exec();
+
+    if (result) {
+        qDebug() << "Строка успешно добавлена";
+    } else {
+        qDebug() << "Ошибка: " << query->lastError().text();
+    }*/
+}
 
 TServer::~TServer(){}
 
@@ -50,7 +75,15 @@ void TServer::incomingConnection(qintptr socketDescriptor)
     }
     SendPackToClient(msgPack);
     */
-    SendToClient("200ok", ETypeAction::CHECK_CONNECTION);
+    // SendToClient("200ok", ETypeAction::CHECK_CONNECTION);
+    _Data.clear();
+    QDataStream output(&_Data, QIODevice::WriteOnly);
+    output.setVersion(QDataStream::Qt_6_2);
+
+    output << ETypeAction::CHECK_CONNECTION;
+    output << QString("200ok");
+
+    socket->write(_Data);
 }
 
 template <class T>
@@ -98,10 +131,52 @@ void TServer::SendMsgToClient(TMessageData msg, ETypeAction typeAction)
 
 bool TServer::UserVerification(QString login, QString pass)
 {
-    if (login == "Danya" && pass == "qwe123") {
+    QSqlQuery* query = new QSqlQuery(_DB);
+    query->prepare("SELECT * FROM Users WHERE Login = :login AND Password = :pass");
+    query->bindValue(":login", login);
+    query->bindValue(":pass", pass);
+    query->exec();
+
+    if (query->next()) {
+        qDebug() << "   Пользователь найден : " << query->value(0) << " | " << query->value(1);
         return true;
     }
+    qDebug() << "   Пользователь не найден";
     return false;
+}
+
+bool TServer::CheckingLoginAvailability(QString login)
+{
+    QSqlQuery* query = new QSqlQuery(_DB);
+    query->prepare("SELECT * FROM Users WHERE Login = :login");
+    query->bindValue(":login", login);
+    query->exec();
+
+    if (query->next()) {
+        return false;
+    }
+    return true;
+}
+
+ETypeAnsRegistration TServer::UserRegistration(QString login, QString pass)
+{
+    if (!CheckingLoginAvailability(login)) {
+        return ETypeAnsRegistration::LOGIN_BUSY;
+    }
+
+    QSqlQuery* query = new QSqlQuery(_DB);
+    query->prepare("INSERT INTO Users (Login, Password) VALUES (:login, :pass)");
+    query->bindValue(":login", login);
+    query->bindValue(":pass", pass);
+    bool result = query->exec();
+
+    if (result) {
+        qDebug() << "Строка успешно добавлена";
+        return ETypeAnsRegistration::OK;
+    }
+
+    qDebug() << "Ошибка: " << query->lastError().text();
+    return ETypeAnsRegistration::UNKNOWN_ERROR;
 }
 
 void TServer::SlotReadyRead()
@@ -151,7 +226,7 @@ void TServer::SlotReadyRead()
         qDebug() << "   Log in : " << login << " | " << pass;
 
         if (!UserVerification(login, pass)) {
-            SendToClient("", ETypeAction::AUTHORIZATION);
+            SendToClient(QString(""), ETypeAction::AUTHORIZATION);
             return;
         }
         SendToClient(login, ETypeAction::AUTHORIZATION);
@@ -206,6 +281,17 @@ void TServer::SlotReadyRead()
         input >> fileId;
         qDebug() << "   Send file to clietn : " << fileId;
         SendFileToClient(socket, fileId);
+    }
+    else if (typeAction == ETypeAction::REGISTRATION) {
+        TUserInfo user;
+        input >> user;
+        qDebug() << "   New user : " << user.Login << " | " << user.Password;
+
+        auto ansReg = UserRegistration(user.Login, user.Password);
+        if (ansReg != ETypeAnsRegistration::OK) {
+            qDebug() << "   Error add new user";
+        }
+        SendToClient(ansReg, ETypeAction::REGISTRATION);
     }
 }
 
