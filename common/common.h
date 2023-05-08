@@ -11,6 +11,7 @@ enum ETypeAction {
     MESSAGE_HISTORY,
     DOWNLOAD_FROM_CLIENT,
     DOWNLOAD_FROM_SERVER,
+    SUBSCRIBE_NEW_MESSAGE,
 };
 
 namespace HOST {

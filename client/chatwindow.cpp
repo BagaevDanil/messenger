@@ -37,13 +37,23 @@ bool TChatWindow::ConnectToHost()
     if (_Socket) {
         delete _Socket;
     }
+    if (_SocketDownload) {
+        delete _SocketDownload;
+    }
+
     _Socket = new QTcpSocket(this);
+    _SocketDownload = new QTcpSocket(this);
+
     connect(_Socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
+    connect(_SocketDownload, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
     connect(_Socket, SIGNAL(disconnected()),this,SLOT(SlotSockDisc()));
+
     _Socket->connectToHost(HOST::ADDRES, HOST::PORT);
+    _SocketDownload->connectToHost(HOST::ADDRES, HOST::PORT);
 
     if (_Socket->waitForConnected()) {
         if (_Socket->waitForReadyRead()) {
+            SendDataToServer(_UserLogin, ETypeAction::SUBSCRIBE_NEW_MESSAGE);
             return true;
         }
     }
@@ -54,6 +64,7 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::TChatWindow)
     , _Socket(nullptr)
+    , _SocketDownload(nullptr)
     , _CurInd(-1)
     , _UserLogin(userLogin)
     , _Button(nullptr)
@@ -76,7 +87,10 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     if (!Connected) {
         throw std::logic_error("No connection");
     }
-    SendDataToServer(_CurInd, ETypeAction::MESSAGE_HISTORY);
+    QTimer::singleShot(200, this, [this](){
+        SendDataToServer(_CurInd, ETypeAction::MESSAGE_HISTORY);
+    });
+
 }
 
 void TChatWindow::ChangeVericalScroll(int value)
@@ -110,8 +124,13 @@ TChatWindow::~TChatWindow()
 }
 
 template<class TypeData>
-void TChatWindow::SendDataToServer(TypeData data, ETypeAction action)
+void TChatWindow::SendDataToServer(TypeData data, ETypeAction action, bool isDownload)
 {
+    auto* socket = _Socket;
+    if (isDownload) {
+        socket = _SocketDownload;
+    }
+
     _Data.clear();
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
@@ -119,7 +138,7 @@ void TChatWindow::SendDataToServer(TypeData data, ETypeAction action)
     output << action;
     output << data;
 
-    _Socket->write(_Data);
+    socket->write(_Data);
 }
 
 void TChatWindow::SendFileToServer(QString fileName)
@@ -136,7 +155,7 @@ void TChatWindow::SendFileToServer(QString fileName)
         qDebug() << "   File: " << fileName << byteArray.size();
 
         TDownloadFileIndo info(_UserLogin, fileName, int(byteArray.size()));
-        SendDataToServer(info, ETypeAction::DOWNLOAD_FROM_CLIENT);
+        SendDataToServer(info, ETypeAction::DOWNLOAD_FROM_CLIENT, true);
     }
     else {
         qDebug() << "   Error file open";
@@ -146,15 +165,15 @@ void TChatWindow::SendFileToServer(QString fileName)
     QTimer::singleShot(TIME_PAUSE_BEFORE_DOWNLOAD, this, [this, byteArray](){
         int byteSend;
         for (byteSend = 0; byteSend < byteArray.size(); byteSend += BYTE_DOWNLOAD_PACK_SIZE) {
-            _Socket->write(byteArray.mid(byteSend, BYTE_DOWNLOAD_PACK_SIZE));
+            _SocketDownload->write(byteArray.mid(byteSend, BYTE_DOWNLOAD_PACK_SIZE));
         }
-        _Socket->write(byteArray.mid(byteSend, byteArray.size() - byteSend));
+        _SocketDownload->write(byteArray.mid(byteSend, byteArray.size() - byteSend));
     });
 }
 
 void TChatWindow::DownloadFileFromHost(TFormFileMessage* file)
 {
-    qDebug() << "Download File From Host : " << file->GetFileID();
+    qDebug() << "Download File From Host, id : " << file->GetFileID();
     _FileNameDownload = QFileDialog::getSaveFileName(
                         this,
                         "Open file",
@@ -163,7 +182,7 @@ void TChatWindow::DownloadFileFromHost(TFormFileMessage* file)
                     );
     if (!_FileNameDownload.isEmpty()) {
         _FormFile = file;
-        SendDataToServer(file->GetFileID(), ETypeAction::DOWNLOAD_FROM_SERVER);
+        SendDataToServer(file->GetFileID(), ETypeAction::DOWNLOAD_FROM_SERVER, true);
     }
 }
 
@@ -191,7 +210,7 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
 void TChatWindow::DownloaIterations()
 {
     qDebug() << "   Downloading..";
-    QByteArray buf = _Socket->readAll();
+    QByteArray buf = _SocketDownload->readAll();
     _DataDownload.push_back(buf);
     _FileByteSize -= buf.size();
     _FormFile->UpdateDownload(buf.size());
@@ -212,8 +231,10 @@ void TChatWindow::DownloaIterations()
 
 void TChatWindow::SlotReadyRead()
 {
-    qDebug() << "-Ans for HOST :";
-    QDataStream input(_Socket);
+    auto* socket = (QTcpSocket*)sender();
+
+    qDebug() << "-Ans for HOST <" << socket->socketDescriptor() << "> :";
+    QDataStream input(socket);
     input.setVersion(QDataStream::Qt_6_2);
 
     if (input.status() != QDataStream::Ok) {
@@ -266,7 +287,7 @@ void TChatWindow::SlotReadyRead()
         }
     }
     else if (typeAction == ETypeAction::CHECK_CONNECTION) {
-        QByteArray buf = _Socket->readAll();
+        QByteArray buf = socket->readAll();
         QString ans(buf);
         qDebug() << "   Check connection : " << ans;
     }

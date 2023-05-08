@@ -30,27 +30,16 @@ void TServer::incomingConnection(qintptr socketDescriptor)
     connect(socket, SIGNAL(disconnected()), this, SLOT(SlotSocketDisc()));
 
     qDebug() << "-New client connected : " << socketDescriptor;
-    _ArrSocket.insert(socket);
+    // _ArrSocket.insert(socket);
     mapDownloadData.insert(socketDescriptor, DataDownloadFileUser());
 
-    /*
-    TMessagePack msgPack;
-    if (_ArrMessage.empty()) {
-        msgPack.SizePack = 0;
-        msgPack.CurInd = 0;
-        SendPackToClient(msgPack);
-        return;
-    }
-
-    msgPack.SizePack = std::min(int(_ArrMessage.size()), SIZE_PACK);
-    msgPack.CurInd = _ArrMessage.size() - msgPack.SizePack;
-
-    for (int i = _ArrMessage.size() - 1; i >= _ArrMessage.size() - msgPack.SizePack; --i) {
-        msgPack.ArrMessage.push_back(_ArrMessage[i]);
-    }
-    SendPackToClient(msgPack);
-    */
-    SendToClient("200ok", ETypeAction::CHECK_CONNECTION);
+    //SendToClient("200ok", ETypeAction::CHECK_CONNECTION);
+    _Data.clear();
+    QDataStream output(&_Data, QIODevice::WriteOnly);
+    output.setVersion(QDataStream::Qt_6_2);
+    output << ETypeAction::CHECK_CONNECTION;
+    output << "200ok";
+    socket->write(_Data);
 }
 
 template <class T>
@@ -207,6 +196,12 @@ void TServer::SlotReadyRead()
         qDebug() << "   Send file to clietn : " << fileId;
         SendFileToClient(socket, fileId);
     }
+    else if (typeAction == ETypeAction::SUBSCRIBE_NEW_MESSAGE) {
+        QString login;
+        input >> login;
+        qDebug() << "   New subscribe : " << login;
+        _ArrSocket.insert(socket);
+    }
 }
 
 void TServer::SendFileToClient(QTcpSocket* socket, int fileId)
@@ -240,6 +235,8 @@ void TServer::SlotSocketDisc()
 {
     socket = (QTcpSocket*)sender();
     qDebug() << "-Disconnect CLIENT : " << socket->socketDescriptor();
-    _ArrSocket.erase(_ArrSocket.find(socket));
+    if (_ArrSocket.find(socket) != _ArrSocket.end()) {
+        _ArrSocket.erase(_ArrSocket.find(socket));
+    }
     socket->deleteLater();
 }

@@ -34,6 +34,8 @@ private slots:
 private:
     Ui::TChatWindow *ui;
     QTcpSocket* _Socket;
+    QTcpSocket* _SocketDownload;
+
     QByteArray _Data;
     bool Connected;
     int _CurInd;
@@ -52,7 +54,7 @@ private:
     void DownloaIterations();
 
     template<class TypeData>
-    void SendDataToServer(TypeData data, ETypeAction action);
+    void SendDataToServer(TypeData data, ETypeAction action, bool isDownload = false);
 
 
 
