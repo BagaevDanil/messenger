@@ -19,14 +19,14 @@ public:
 public:
     QTcpSocket* socket;
     struct DataDownloadFileUser {
-        bool _Downloading;
-        int  _FileByteSize;
-        QByteArray _DataDownload;
-        QString _FileNameDownload;
+        bool Downloading;
+        int  FileByteSize;
+        QByteArray DataDownload;
+        QString FileNameDownload;
         QString UserLogin;
 
         DataDownloadFileUser()
-            : _Downloading(false){}
+            : Downloading(false){}
     };
 
     struct TFile{
@@ -48,8 +48,13 @@ private:
 
      QMap<int, DataDownloadFileUser> mapDownloadData;
 
-     template <class T>
-     void SendToClient(T msg, ETypeAction typeAction = MESSAGE);
+     template <class TypeData>
+     void SendDataToAllClients(TypeData msg, ETypeAction typeAction);
+
+     template <class TypeData>
+     void SendDataToClient(TypeData data, ETypeAction typeAction, QTcpSocket* socket);
+
+     void DownloaIterations(DataDownloadFileUser& userDownloadInfo, QTcpSocket* socket);
 
      void SendPackToClient(TMessagePack msgPack);
      void SendMsgToClient(TMessageData msg, ETypeAction typeAction = MESSAGE);

@@ -7,42 +7,30 @@
 
 
 int SIZE_PACK = 10;
+int TIME_PAUSE_BEFORE_DOWNLOAD = 300;
+int BYTE_DOWNLOAD_PACK_SIZE = 32000;
 
-TServer::TServer()
-{
-    _DB = QSqlDatabase::addDatabase("QSQLITE");
-    _DB.setDatabaseName("../messenger.db");
-    if (!_DB.open()) {
-        qDebug() << "-Error DB";
-        return;
-    }
-    qDebug() << "-Connect to DB";
-    QSqlQuery* query = new QSqlQuery(_DB);
-    //query->exec("CREATE TABLE Users(Login TEXT, Password TEXT)");
-
-    /*query->prepare("INSERT INTO Users (Login, Password) VALUES (:login, :pass)");
-    query->bindValue(":login", "Danil");
-    query->bindValue(":pass", "qwert");
-    bool result = query->exec();
-
-    if (result) {
-        qDebug() << "Строка успешно добавлена";
-    } else {
-        qDebug() << "Ошибка: " << query->lastError().text();
-    }*/
-}
+TServer::TServer(){}
 
 TServer::~TServer(){}
 
 bool TServer::StartServer()
 {
-    if (this->listen(QHostAddress::Any, HOST::PORT))
-    {
-        qDebug() << "-Start server!";
-        return true;
+    _DB = QSqlDatabase::addDatabase("QSQLITE");
+    _DB.setDatabaseName("../messenger.db");
+    if (!_DB.open()) {
+        qDebug() << "-Error DB";
+        return false;
     }
-    qDebug() << "-Error start server!";
-    return false;
+    qDebug() << "-Connect to DB";
+
+    if (!this->listen(QHostAddress::Any, HOST::PORT)) {
+        qDebug() << "-Error start server!";
+        return false;
+    }
+    qDebug() << "-Start server!";
+
+    return true;
 }
 
 void TServer::incomingConnection(qintptr socketDescriptor)
@@ -58,75 +46,35 @@ void TServer::incomingConnection(qintptr socketDescriptor)
     _ArrSocket.insert(socket);
     mapDownloadData.insert(socketDescriptor, DataDownloadFileUser());
 
-    /*
-    TMessagePack msgPack;
-    if (_ArrMessage.empty()) {
-        msgPack.SizePack = 0;
-        msgPack.CurInd = 0;
-        SendPackToClient(msgPack);
-        return;
-    }
+    SendDataToClient(QString("200ok"), ETypeAction::CHECK_CONNECTION, socket);
+}
 
-    msgPack.SizePack = std::min(int(_ArrMessage.size()), SIZE_PACK);
-    msgPack.CurInd = _ArrMessage.size() - msgPack.SizePack;
-
-    for (int i = _ArrMessage.size() - 1; i >= _ArrMessage.size() - msgPack.SizePack; --i) {
-        msgPack.ArrMessage.push_back(_ArrMessage[i]);
-    }
-    SendPackToClient(msgPack);
-    */
-    // SendToClient("200ok", ETypeAction::CHECK_CONNECTION);
+template <class TypeData>
+void TServer::SendDataToAllClients(TypeData data, ETypeAction typeAction)
+{
     _Data.clear();
     QDataStream output(&_Data, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_2);
 
-    output << ETypeAction::CHECK_CONNECTION;
-    output << QString("200ok");
+    output << typeAction;
+    output << data;
+
+    for (auto& sock : _ArrSocket) {
+        sock->write(_Data);
+    }
+}
+
+template <class TypeData>
+void TServer::SendDataToClient(TypeData data, ETypeAction typeAction, QTcpSocket* socket)
+{
+    _Data.clear();
+    QDataStream output(&_Data, QIODevice::WriteOnly);
+    output.setVersion(QDataStream::Qt_6_2);
+
+    output << typeAction;
+    output << data;
 
     socket->write(_Data);
-}
-
-template <class T>
-void TServer::SendToClient(T msg, ETypeAction typeAction)
-{
-    _Data.clear();
-    QDataStream output(&_Data, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_2);
-
-    output << typeAction;
-    output << msg;
-
-    for (auto& sock : _ArrSocket) {
-        sock->write(_Data);
-    }
-}
-
-void TServer::SendPackToClient(TMessagePack msgPack)
-{
-    _Data.clear();
-    QDataStream output(&_Data, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_2);
-
-    output << ETypeAction::MESSAGE_HISTORY;
-    output << msgPack;
-
-    for (auto& sock : _ArrSocket) {
-        sock->write(_Data);
-    }
-}
-
-void TServer::SendMsgToClient(TMessageData msg, ETypeAction typeAction)
-{
-    _Data.clear();
-    QDataStream output(&_Data, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_2);
-
-    output << typeAction;
-    output << msg;
-
-    for (auto& sock : _ArrSocket) {
-        sock->write(_Data);
-    }
 }
 
 bool TServer::UserVerification(QString login, QString pass)
@@ -138,7 +86,7 @@ bool TServer::UserVerification(QString login, QString pass)
     query->exec();
 
     if (query->next()) {
-        qDebug() << "   Пользователь найден : " << query->value(0) << " | " << query->value(1);
+        qDebug() << "   Пользователь найден : " << query->value(0);
         return true;
     }
     qDebug() << "   Пользователь не найден";
@@ -179,10 +127,36 @@ ETypeAnsRegistration TServer::UserRegistration(QString login, QString pass)
     return ETypeAnsRegistration::UNKNOWN_ERROR;
 }
 
+void TServer::DownloaIterations(DataDownloadFileUser& userDownloadInfo, QTcpSocket* socket)
+{
+    QByteArray buf = socket->readAll();
+    userDownloadInfo.DataDownload.push_back(buf);
+    userDownloadInfo.FileByteSize -= buf.size();
+
+    qDebug() << "   File:" << buf.size() << " | " << userDownloadInfo.FileByteSize;
+    if (userDownloadInfo.FileByteSize <= 0) {
+        userDownloadInfo.Downloading = false;
+        qDebug() << "Finish downloading, size : " << userDownloadInfo.DataDownload.size();
+
+        TMessageData msg;
+        msg.Time = QTime::currentTime().toString("hh:mm:ss");
+        msg.Login = userDownloadInfo.UserLogin;
+        msg.Text = userDownloadInfo.FileNameDownload;
+        msg.Type = TMessageData::ETypeMessage::FILE;
+        msg.FileId = _ArrFile.size();
+
+        _ArrMessage.push_back(msg);
+        _ArrFile.push_back({userDownloadInfo.DataDownload, userDownloadInfo.FileNameDownload});
+        SendDataToAllClients(msg, ETypeAction::MESSAGE);
+    }
+}
+
 void TServer::SlotReadyRead()
 {
     socket = (QTcpSocket*)sender();
     int userDescr = socket->socketDescriptor();
+    auto& userDownloadInfo = mapDownloadData[userDescr];
+
     qDebug() << "-Ans for CLIENT <" << userDescr << "> :";
     QDataStream input(socket);
     input.setVersion(QDataStream::Qt_6_2);
@@ -192,27 +166,9 @@ void TServer::SlotReadyRead()
         return;
     }
 
-    if (mapDownloadData[userDescr]._Downloading) {
-        qDebug() << "   Downloading..";
-        QByteArray buf = socket->readAll();
-        mapDownloadData[userDescr]._DataDownload.push_back(buf);
-        mapDownloadData[userDescr]._FileByteSize -= buf.size();
-
-        qDebug() << "   File:" << buf.size() << " | " << mapDownloadData[userDescr]._FileByteSize;
-        if (mapDownloadData[userDescr]._FileByteSize <= 0) {
-            mapDownloadData[userDescr]._Downloading = false;
-            qDebug() << "Finish downloading, size : " << mapDownloadData[userDescr]._DataDownload.size();
-
-            TMessageData msg;
-            msg.Time = QTime::currentTime().toString("hh:mm:ss");
-            msg.Login = mapDownloadData[userDescr].UserLogin;
-            msg.Text = mapDownloadData[userDescr]._FileNameDownload;
-            msg.Type = TMessageData::ETypeMessage::FILE;
-            msg.FileId = _ArrFile.size();
-            _ArrMessage.push_back(msg);
-            _ArrFile.push_back({mapDownloadData[userDescr]._DataDownload, mapDownloadData[userDescr]._FileNameDownload});
-            SendMsgToClient(msg, ETypeAction::MESSAGE);
-        }
+    if (userDownloadInfo.Downloading) {
+        qDebug() << "   Downloading...";
+        DownloaIterations(userDownloadInfo, socket);
         return;
     }
 
@@ -220,16 +176,15 @@ void TServer::SlotReadyRead()
     input >> typeAction;
 
     if (typeAction == ETypeAction::AUTHORIZATION) {
-        QString login;
-        QString pass;
-        input >> login >> pass;
-        qDebug() << "   Log in : " << login << " | " << pass;
+        TUserInfo user;
+        input >> user;
+        qDebug() << "   Log in : " << user.Login << " | " << user.Password;
 
-        if (!UserVerification(login, pass)) {
-            SendToClient(QString(""), ETypeAction::AUTHORIZATION);
+        if (!UserVerification(user.Login, user.Password)) {
+            SendDataToClient(QString(""), ETypeAction::AUTHORIZATION, socket);
             return;
         }
-        SendToClient(login, ETypeAction::AUTHORIZATION);
+        SendDataToClient(user.Login, ETypeAction::AUTHORIZATION, socket);
     }
     else if (typeAction == ETypeAction::MESSAGE) {
         TMessageData msg;
@@ -239,7 +194,7 @@ void TServer::SlotReadyRead()
         _ArrMessage.push_back(msg);
 
         qDebug() << "   Msg (" << msg.Login << ") : " << msg.Text << " | " << msg.Time;
-        SendMsgToClient(msg, ETypeAction::MESSAGE);
+        SendDataToAllClients(msg, ETypeAction::MESSAGE);
     }
     else if (typeAction == ETypeAction::CHECK_CONNECTION) {
         qDebug() << "   Check connection : " << "200ok";
@@ -257,24 +212,23 @@ void TServer::SlotReadyRead()
         TMessagePack msgPack;
         msgPack.SizePack = std::min(ind, SIZE_PACK);
         msgPack.CurInd = ind - msgPack.SizePack;
-
-        qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd << "(ind)";
-
         for (int i = ind - 1; i >= ind - msgPack.SizePack; --i) {
             msgPack.ArrMessage.push_back(_ArrMessage[i]);
         }
-        SendToClient(msgPack, ETypeAction::MESSAGE_HISTORY);
+
+        qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd << "(ind)";
+        SendDataToClient(msgPack, ETypeAction::MESSAGE_HISTORY, socket);
     }
     else if (typeAction == ETypeAction::DOWNLOAD_FROM_CLIENT) {
-        mapDownloadData[userDescr]._Downloading = true;
+        userDownloadInfo.Downloading = true;
         TDownloadFileIndo info;
         input >> info;
 
-        mapDownloadData[userDescr].UserLogin = info.Login;
-        mapDownloadData[userDescr]._FileNameDownload = info.FileName;
-        mapDownloadData[userDescr]._FileByteSize = info.FileSize;
-        mapDownloadData[userDescr]._DataDownload.clear();
-        qDebug() << "   Start download : " << mapDownloadData[userDescr]._FileByteSize;
+        userDownloadInfo.UserLogin = info.Login;
+        userDownloadInfo.FileNameDownload = info.FileName;
+        userDownloadInfo.FileByteSize = info.FileSize;
+        userDownloadInfo.DataDownload.clear();
+        qDebug() << "   Start download : " << userDownloadInfo.FileByteSize;
     }
     else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
         int fileId;
@@ -291,41 +245,35 @@ void TServer::SlotReadyRead()
         if (ansReg != ETypeAnsRegistration::OK) {
             qDebug() << "   Error add new user";
         }
-        SendToClient(ansReg, ETypeAction::REGISTRATION);
+        SendDataToClient(ansReg, ETypeAction::REGISTRATION, socket);
     }
 }
 
 void TServer::SendFileToClient(QTcpSocket* socket, int fileId)
 {
     qDebug() << "-Send file:";
-
-    _Data.clear();
-    QDataStream output(&_Data, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_2);
     auto& byteArray = _ArrFile[fileId].Data;
     qDebug() << "   File: " << byteArray.size();
 
-    output << ETypeAction::DOWNLOAD_FROM_SERVER;
-    output << int(byteArray.size());
+    SendDataToClient(int(byteArray.size()), ETypeAction::DOWNLOAD_FROM_SERVER, socket);
 
-    socket->write(_Data);
-
-    //
-    QTimer::singleShot(300, this, [this, byteArray, socket](){
-        int BYTE_PACK_SIZE = 32000;
-        int i = 0;
-        for (i = 0; i < byteArray.size(); i += BYTE_PACK_SIZE) {
-            socket->write(byteArray.mid(i, BYTE_PACK_SIZE));
+    QTimer::singleShot(TIME_PAUSE_BEFORE_DOWNLOAD, this, [this, byteArray, socket](){
+        int readyByte;
+        for (readyByte = 0; readyByte < byteArray.size(); readyByte += BYTE_DOWNLOAD_PACK_SIZE) {
+            socket->write(byteArray.mid(readyByte, BYTE_DOWNLOAD_PACK_SIZE));
         }
-        socket->write(byteArray.mid(i, BYTE_PACK_SIZE));
+        socket->write(byteArray.mid(readyByte, BYTE_DOWNLOAD_PACK_SIZE));
     });
     qDebug() << "   File sended";
 }
 
 void TServer::SlotSocketDisc()
 {
+    qDebug() << "-Disconnect CLIENT";
     socket = (QTcpSocket*)sender();
-    qDebug() << "-Disconnect CLIENT : " << socket->socketDescriptor();
-    _ArrSocket.erase(_ArrSocket.find(socket));
+    auto itSocket = _ArrSocket.find(socket);
+    if (itSocket != _ArrSocket.end()) {
+        _ArrSocket.erase(itSocket);
+    }
     socket->deleteLater();
 }
