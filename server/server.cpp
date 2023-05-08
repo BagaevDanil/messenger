@@ -35,7 +35,6 @@ bool TServer::StartServer()
 
 void TServer::incomingConnection(qintptr socketDescriptor)
 {
-
     socket = new QTcpSocket;
     socket->setSocketDescriptor(socketDescriptor);
 
@@ -43,7 +42,7 @@ void TServer::incomingConnection(qintptr socketDescriptor)
     connect(socket, SIGNAL(disconnected()), this, SLOT(SlotSocketDisc()));
 
     qDebug() << "-New client connected : " << socketDescriptor;
-    _ArrSocket.insert(socket);
+    // _ArrSocket.insert(socket);
     mapDownloadData.insert(socketDescriptor, DataDownloadFileUser());
 
     SendDataToClient(QString("200ok"), ETypeAction::CHECK_CONNECTION, socket);
@@ -246,6 +245,12 @@ void TServer::SlotReadyRead()
             qDebug() << "   Error add new user";
         }
         SendDataToClient(ansReg, ETypeAction::REGISTRATION, socket);
+    }
+    else if (typeAction == ETypeAction::SUBSCRIBE_TO_MESSAGES) {
+        QString ans;
+        input >> ans;
+        qDebug() << "  Subscribe to message : " << socket->socketDescriptor();
+        _ArrSocket.insert(socket);
     }
 }
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>426</width>
-    <height>545</height>
+    <width>427</width>
+    <height>538</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,12 +27,12 @@
      <string>Send</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit2">
+   <widget class="QLineEdit" name="lineEdit">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>450</y>
-      <width>31</width>
+      <width>231</width>
       <height>40</height>
      </rect>
     </property>
@@ -63,9 +63,9 @@
    <widget class="QPushButton" name="pushButtonToBottom">
     <property name="geometry">
      <rect>
-      <x>360</x>
-      <y>390</y>
-      <width>31</width>
+      <x>250</x>
+      <y>450</y>
+      <width>21</width>
       <height>41</height>
      </rect>
     </property>
@@ -86,24 +86,14 @@
      <string>File</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="lineEdit">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>450</y>
-      <width>221</width>
-      <height>41</height>
-     </rect>
-    </property>
-   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>426</width>
-     <height>26</height>
+     <width>427</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

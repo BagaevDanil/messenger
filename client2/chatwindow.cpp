@@ -11,11 +11,6 @@ int TIME_AUTOMATIC_SCROLL_DOWN = 50;
 int TIME_AUTOMATIC_SCROLL_HISTORY = 80;
 int TIME_PAUSE_BEFORE_DOWNLOAD = 300;
 int BYTE_DOWNLOAD_PACK_SIZE = 32768;
-int TIME_PAUSE_REQUEST_HISTORY = 300;
-
-
-
-
 
 bool TChatWindow::HostExists()
 {
@@ -33,7 +28,6 @@ bool TChatWindow::HostExists()
         }
         Connected = ConnectToHost();
     }
-    QMessageBox::information(this, "Подключение", "Подключение было восстановлено");
     qDebug() << "   Successfully connected";
     return false;
 }
@@ -88,13 +82,13 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
 
     connect(ui->scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(ChangeVericalScroll(int)));
 
-    Connected = ConnectToHost();
-    // HostExists();
+    // Connected = ConnectToHost();
+    HostExists();
     if (!Connected) {
         throw std::logic_error("No connection");
     }
 
-    QTimer::singleShot(TIME_PAUSE_REQUEST_HISTORY, this, [this](){
+    QTimer::singleShot(300, this, [this](){
         SendDataToServer(_CurInd, ETypeAction::MESSAGE_HISTORY);
     });
 }
@@ -201,7 +195,7 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
     }
     else {
         qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-        msgForm = new TFormFileMessage(msg, isMyMsg, this);
+        msgForm = new TFormFileMessage(msg, this);
         connect(msgForm, SIGNAL(DownloadFile(TFormFileMessage*)), this, SLOT(DownloadFileFromHost(TFormFileMessage*)));
     }
 
@@ -248,7 +242,7 @@ void TChatWindow::SlotReadyRead()
         return;
     }
 
-    if (_Downloading && socket == _SocketDownload) {
+    if (_Downloading) {
         DownloaIterations();
         return;
     }
@@ -327,8 +321,7 @@ void TChatWindow::on_pushButtonToBottom_clicked()
 void TChatWindow::on_lineEdit_returnPressed()
 {
     if (HostExists()) {
-        TMessageData msg(_UserLogin, ui->lineEdit->toPlainText(), "", TMessageData::ETypeMessage::TEXT);
-        ui->lineEdit->clear();
+        TMessageData msg(_UserLogin, ui->lineEdit->text(), "", TMessageData::ETypeMessage::TEXT);
         SendDataToServer(msg, ETypeAction::MESSAGE);
     }
 }

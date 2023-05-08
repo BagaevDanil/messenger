@@ -14,7 +14,7 @@ class TFormFileMessage : public QWidget
     Q_OBJECT
 
 public:
-    explicit TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *parent = nullptr);
+    explicit TFormFileMessage(TMessageData msg, QWidget *parent = nullptr);
     ~TFormFileMessage();
     const int& GetFileID();
     const QString& GetFileName();
