@@ -13,24 +13,22 @@ SOURCES += \
     ../common/common.cpp \
     authorizationwindow.cpp \
     chatwindow.cpp \
-    customtextedit.cpp \
     formfilemessage.cpp \
-    formtextmessage.cpp \
-    main.cpp
+    main.cpp \
+    textmessage.cpp
 
 HEADERS += \
     ../common/common.h \
     authorizationwindow.h \
     chatwindow.h \
-    customtextedit.h \
     formfilemessage.h \
-    formtextmessage.h
+    textmessage.h
 
 FORMS += \
     authorizationwindow.ui \
     chatwindow.ui \
     formfilemessage.ui \
-    formtextmessage.ui
+    textmessage.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

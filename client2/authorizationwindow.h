@@ -21,18 +21,18 @@ public:
     bool HostExists();
     bool ConnectToHost();
 
+    template<class TypeData>
+    void SendDataToServer(TypeData data, ETypeAction action);
+
+
+
 private:
     Ui::TAuthorizationWindow *ui;
     QTcpSocket* _Socket;
     QByteArray _Data;
-    bool Connected;
-
-private:
     void AuthorizationServer();
     void RegistrationServer();
-
-    template<class TypeData>
-    void SendDataToServer(TypeData data, ETypeAction action);
+    bool Connected;
 
 public slots:
     void SlotReadyRead();

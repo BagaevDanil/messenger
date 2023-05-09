@@ -1,6 +1,6 @@
 #include "chatwindow.h"
 #include "ui_chatwindow.h"
-#include "formtextmessage.h"
+#include "textmessage.h"
 #include <QScrollBar>
 #include <QTimer>
 #include <QFile>
@@ -77,23 +77,22 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     ui->setupUi(this);
     ui->progressBar->setVisible(false);
 
-    _TextField = new TCustomTextEdit(this);
-    _TextField->setGeometry(ui->lineEditFake->geometry());
-    ui->lineEditFake->setVisible(false);
-    _TextField->setStyleSheet(ui->lineEditFake->styleSheet());
-
+    _TextField = new CustomTextEdit(this);
+    _TextField->setGeometry(QRect(20, 450, 270, 60));
     connect(_TextField, SIGNAL(sendMsg()), this, SLOT(TextFieldPress()));
     connect(ui->pushButtonSend, SIGNAL(clicked()), this, SLOT(TextFieldPress()));
 
     ui->scrollArea->setWidgetResizable(true);
     ui->pushButtonToBottom->setVisible(false);
 
-    _Container = ui->scrollAreaWidgetContents;
-    _Layout = ui->verticalLayout;
+    _Container = new QWidget();
+    ui->scrollArea->setWidget(_Container);
+    _Layout = new QVBoxLayout(_Container);
 
     connect(ui->scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(ChangeVericalScroll(int)));
 
     Connected = ConnectToHost();
+    // HostExists();
     if (!Connected) {
         throw std::logic_error("No connection");
     }
@@ -240,7 +239,7 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
         _Layout->addWidget(msgForm);
     }
     else {
-        _Layout->insertWidget(1, msgForm);
+        _Layout->insertWidget(0, msgForm);
     }
 }
 
@@ -319,9 +318,8 @@ void TChatWindow::SlotReadyRead()
         _CurInd = msgPack.CurInd;
         if (_CurInd > 0) {
             _Button = new QPushButton("Раннее", this);
-            _Button->setStyleSheet(ui->pushButtonToBottom->styleSheet());
             connect(_Button, SIGNAL(clicked()), this, SLOT(GetHistoryPack()));
-            _Layout->insertWidget(1, _Button);
+            _Layout->insertWidget(0, _Button);
         }
     }
     else if (typeAction == ETypeAction::CHECK_CONNECTION) {

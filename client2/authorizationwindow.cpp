@@ -130,6 +130,7 @@ void TAuthorizationWindow::SlotReadyRead()
         }
         qDebug() << "   Successful log in";
 
+        // Try
         TChatWindow* chatWindow = new TChatWindow(login);
         chatWindow->show();
 
@@ -155,7 +156,7 @@ void TAuthorizationWindow::SlotReadyRead()
         }
     }
     else {
-        qDebug() << "Error action";
+        qDebug() << "No Action?";
         QByteArray buf = _Socket->readAll();
     }
 }

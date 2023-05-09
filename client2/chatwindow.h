@@ -10,7 +10,31 @@
 #include "formfilemessage.h"
 #include <QPlainTextEdit>
 #include <QKeyEvent>
-#include "customtextedit.h"
+
+class CustomTextEdit : public QPlainTextEdit
+{
+    Q_OBJECT
+public:
+    CustomTextEdit(QWidget *parent = nullptr) : QPlainTextEdit(parent) {}
+signals:
+    void sendMsg();
+
+protected:
+    void keyPressEvent(QKeyEvent *event) override
+    {
+        if (event->modifiers() == Qt::ShiftModifier && event->key() == Qt::Key_Return) {
+            QTextCursor cursor = textCursor();
+            cursor.insertBlock();
+            setTextCursor(cursor);
+        }
+        else if (event->key() == Qt::Key_Return) {
+            emit sendMsg();
+        }
+        else {
+            QPlainTextEdit::keyPressEvent(event);
+        }
+    }
+};
 
 namespace Ui {
 class TChatWindow;
@@ -25,6 +49,7 @@ public:
     ~TChatWindow();
     bool HostExists();
     bool ConnectToHost();
+    void SendFileToServer(QString fileName);
 
 private slots:
     void on_pushButtonToBottom_clicked();
@@ -33,7 +58,7 @@ private slots:
 
 private:
     Ui::TChatWindow *ui;
-    TCustomTextEdit* _TextField;
+    CustomTextEdit* _TextField;
 
     QTcpSocket* _Socket;
     QTcpSocket* _SocketDownload;
@@ -52,7 +77,6 @@ private:
     QString _FileNameDownload;
     TFormFileMessage* _FormFile;
 
-private:
     void AddNewMessage(TMessageData msg, bool toBottom);
     void DownloaIterations();
 
@@ -62,7 +86,6 @@ private:
     void FinishLocalLoad();
     void UpdateLocalLoad(int size);
     void StartLocalLoad(int size);
-    void SendFileToServer(QString fileName);
 
 public slots:
     void TextFieldPress();
