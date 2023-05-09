@@ -354,6 +354,10 @@ void TChatWindow::on_pushButtonToBottom_clicked()
 void TChatWindow::TextFieldPress()
 {
     qDebug() << "-Press";
+    if (_TextField->toPlainText().isEmpty()) {
+        return;
+    }
+
     if (HostExists()) {
         TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT);
         _TextField->clear();

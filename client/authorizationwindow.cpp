@@ -83,8 +83,17 @@ void TAuthorizationWindow::AuthorizationServer()
 {
     QString login = ui->lineEditLogin->text();
     QString pass = ui->lineEditPassword->text();
-    TUserInfo user(login, pass);
 
+    if (login.isEmpty()) {
+        QMessageBox::critical(this, "Ошибка", "Введите логин");
+        return;
+    }
+    if (pass.isEmpty()) {
+        QMessageBox::critical(this, "Ошибка", "Введите пароль");
+        return;
+    }
+
+    TUserInfo user(login, pass);
     SendDataToServer(user, ETypeAction::AUTHORIZATION);
 }
 
@@ -96,6 +105,14 @@ void TAuthorizationWindow::RegistrationServer()
     QString pass = ui->lineEditNewPassword->text();
     QString passRepeat = ui->lineEditNewPasswordRepeat->text();
 
+    if (login.isEmpty()) {
+        QMessageBox::critical(this, "Ошибка", "Введите логин");
+        return;
+    }
+    if (pass.isEmpty()) {
+        QMessageBox::critical(this, "Ошибка", "Введите пароль");
+        return;
+    }
     if (pass != passRepeat) {
         QMessageBox::critical(this, "Ошибка", "Пароли не совпадают");
         return;
