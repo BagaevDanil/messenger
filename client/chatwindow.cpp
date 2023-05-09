@@ -209,6 +209,11 @@ void TChatWindow::StartLocalLoad(int size)
 
 void TChatWindow::DownloadFileFromHost(TFormFileMessage* file)
 {
+    if (_Downloading) {
+        QMessageBox::critical(this, "Ошибка", "Перед новым скачиванием дождитесь окончания загрузок");
+        return;
+    }
+
     qDebug() << "Download File From Host : " << file->GetFileID();
     _FileNameDownload = QFileDialog::getSaveFileName(
                         this,
@@ -354,6 +359,10 @@ void TChatWindow::on_pushButtonToBottom_clicked()
 void TChatWindow::TextFieldPress()
 {
     qDebug() << "-Press";
+    if (_TextField->toPlainText().isEmpty()) {
+        return;
+    }
+
     if (HostExists()) {
         TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT);
         _TextField->clear();

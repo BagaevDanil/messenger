@@ -21,7 +21,6 @@ QDataStream& operator<< (QDataStream& out, TUserInfo& info)
 }
 
 
-
 TDownloadFileIndo::TDownloadFileIndo(){}
 
 TDownloadFileIndo::TDownloadFileIndo(QString login, QString fileName, int fileSize)
@@ -49,8 +48,6 @@ QDataStream& operator<< (QDataStream& out, TDownloadFileIndo& info)
     return out;
 }
 
-
-
 QDataStream& operator>> (QDataStream &in, TMessageData &msg)
 {
     in >> msg.Login;
@@ -76,6 +73,7 @@ QDataStream& operator<< (QDataStream &out, TMessageData &msg)
     out << QString::number(msg.FileId);
     return out;
 }
+
 
 TMessageData::TMessageData(){}
 

@@ -1,5 +1,5 @@
 #include "formtextmessage.h"
-#include "ui_textmessage.h"
+#include "ui_formtextmessage.h"
 #include <QTimer>
 #include <QScrollBar>
 #include <QSpacerItem>
