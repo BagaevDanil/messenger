@@ -26,7 +26,6 @@ namespace HOST {
     const int PORT = 1234;
 };
 
-
 struct TUserInfo {
     QString Login;
     QString Password;
@@ -53,18 +52,15 @@ public:
 };
 
 
-class TMessageData {
-public:
+struct TMessageData {
     enum ETypeMessage {
         TEXT,
         FILE,
     };
 
-public:
     TMessageData();
     TMessageData(QString login, QString text, QString time, ETypeMessage type);
 
-public:
     QString Login;
     QString Text;
     QString Time;
@@ -75,8 +71,7 @@ public:
     friend QDataStream& operator<< (QDataStream &out, TMessageData &msg);
 };
 
-class TMessagePack {
-public:
+struct TMessagePack {
     QVector<TMessageData> ArrMessage;
     int CurInd;
     int SizePack;
