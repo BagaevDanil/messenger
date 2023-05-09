@@ -35,17 +35,17 @@ bool TServer::StartServer()
 
 void TServer::incomingConnection(qintptr socketDescriptor)
 {
-    socket = new QTcpSocket;
-    socket->setSocketDescriptor(socketDescriptor);
+    _Socket = new QTcpSocket;
+    _Socket->setSocketDescriptor(socketDescriptor);
 
-    connect(socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
-    connect(socket, SIGNAL(disconnected()), this, SLOT(SlotSocketDisc()));
+    connect(_Socket, SIGNAL(readyRead()), this, SLOT(SlotReadyRead()));
+    connect(_Socket, SIGNAL(disconnected()), this, SLOT(SlotSocketDisc()));
 
     qDebug() << "-New client connected : " << socketDescriptor;
     // _ArrSocket.insert(socket);
-    mapDownloadData.insert(socketDescriptor, DataDownloadFileUser());
+    _MapDownloadData.insert(socketDescriptor, DataDownloadFileUser());
 
-    SendDataToClient(QString("200ok"), ETypeAction::CHECK_CONNECTION, socket);
+    SendDataToClient(QString("200ok"), ETypeAction::CHECK_CONNECTION, _Socket);
 }
 
 template <class TypeData>
@@ -152,12 +152,12 @@ void TServer::DownloaIterations(DataDownloadFileUser& userDownloadInfo, QTcpSock
 
 void TServer::SlotReadyRead()
 {
-    socket = (QTcpSocket*)sender();
-    int userDescr = socket->socketDescriptor();
-    auto& userDownloadInfo = mapDownloadData[userDescr];
+    _Socket = (QTcpSocket*)sender();
+    int userDescr = _Socket->socketDescriptor();
+    auto& userDownloadInfo = _MapDownloadData[userDescr];
 
     qDebug() << "-Ans for CLIENT <" << userDescr << "> :";
-    QDataStream input(socket);
+    QDataStream input(_Socket);
     input.setVersion(QDataStream::Qt_6_2);
 
     if (input.status() != QDataStream::Ok) {
@@ -167,7 +167,7 @@ void TServer::SlotReadyRead()
 
     if (userDownloadInfo.Downloading) {
         qDebug() << "   Downloading...";
-        DownloaIterations(userDownloadInfo, socket);
+        DownloaIterations(userDownloadInfo, _Socket);
         return;
     }
 
@@ -180,10 +180,10 @@ void TServer::SlotReadyRead()
         qDebug() << "   Log in : " << user.Login << " | " << user.Password;
 
         if (!UserVerification(user.Login, user.Password)) {
-            SendDataToClient(QString(""), ETypeAction::AUTHORIZATION, socket);
+            SendDataToClient(QString(""), ETypeAction::AUTHORIZATION, _Socket);
             return;
         }
-        SendDataToClient(user.Login, ETypeAction::AUTHORIZATION, socket);
+        SendDataToClient(user.Login, ETypeAction::AUTHORIZATION, _Socket);
     }
     else if (typeAction == ETypeAction::MESSAGE) {
         TMessageData msg;
@@ -216,7 +216,7 @@ void TServer::SlotReadyRead()
         }
 
         qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd << "(ind)";
-        SendDataToClient(msgPack, ETypeAction::MESSAGE_HISTORY, socket);
+        SendDataToClient(msgPack, ETypeAction::MESSAGE_HISTORY, _Socket);
     }
     else if (typeAction == ETypeAction::DOWNLOAD_FROM_CLIENT) {
         userDownloadInfo.Downloading = true;
@@ -233,7 +233,7 @@ void TServer::SlotReadyRead()
         int fileId;
         input >> fileId;
         qDebug() << "   Send file to clietn : " << fileId;
-        SendFileToClient(socket, fileId);
+        SendFileToClient(_Socket, fileId);
     }
     else if (typeAction == ETypeAction::REGISTRATION) {
         TUserInfo user;
@@ -244,13 +244,13 @@ void TServer::SlotReadyRead()
         if (ansReg != ETypeAnsRegistration::OK) {
             qDebug() << "   Error add new user";
         }
-        SendDataToClient(ansReg, ETypeAction::REGISTRATION, socket);
+        SendDataToClient(ansReg, ETypeAction::REGISTRATION, _Socket);
     }
     else if (typeAction == ETypeAction::SUBSCRIBE_TO_MESSAGES) {
         QString ans;
         input >> ans;
-        qDebug() << "  Subscribe to message : " << socket->socketDescriptor();
-        _ArrSocket.insert(socket);
+        qDebug() << "  Subscribe to message : " << _Socket->socketDescriptor();
+        _ArrSocket.insert(_Socket);
     }
 }
 
@@ -275,10 +275,10 @@ void TServer::SendFileToClient(QTcpSocket* socket, int fileId)
 void TServer::SlotSocketDisc()
 {
     qDebug() << "-Disconnect CLIENT";
-    socket = (QTcpSocket*)sender();
-    auto itSocket = _ArrSocket.find(socket);
+    _Socket = (QTcpSocket*)sender();
+    auto itSocket = _ArrSocket.find(_Socket);
     if (itSocket != _ArrSocket.end()) {
         _ArrSocket.erase(itSocket);
     }
-    socket->deleteLater();
+    _Socket->deleteLater();
 }

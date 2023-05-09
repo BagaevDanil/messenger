@@ -62,12 +62,12 @@ QProgressBar* TFormFileMessage::GetProgressBar()
     return ui->progressBar;
 }
 
-const int& TFormFileMessage::GetFileID()
+const int& TFormFileMessage::GetFileID() const
 {
     return _FileID;
 }
 
-const QString& TFormFileMessage::GetFileName()
+const QString& TFormFileMessage::GetFileName() const
 {
     return _FileName;
 }

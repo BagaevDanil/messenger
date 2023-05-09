@@ -1,6 +1,6 @@
 #include "chatwindow.h"
 #include "ui_chatwindow.h"
-#include "textmessage.h"
+#include "formtextmessage.h"
 #include <QScrollBar>
 #include <QTimer>
 #include <QFile>
@@ -77,7 +77,7 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     ui->setupUi(this);
     ui->progressBar->setVisible(false);
 
-    _TextField = new CustomTextEdit(this);
+    _TextField = new TCustomTextEdit(this);
     _TextField->setGeometry(ui->lineEditFake->geometry());
     ui->lineEditFake->setVisible(false);
     _TextField->setStyleSheet(ui->lineEditFake->styleSheet());
@@ -88,9 +88,6 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     ui->scrollArea->setWidgetResizable(true);
     ui->pushButtonToBottom->setVisible(false);
 
-    //_Container = new QWidget();
-    //ui->scrollArea->setWidget(_Container);
-    // _Layout = new QVBoxLayout(_Container);
     _Container = ui->scrollAreaWidgetContents;
     _Layout = ui->verticalLayout;
 

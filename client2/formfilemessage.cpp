@@ -4,7 +4,7 @@
 
 int TIME_PAUSE_FINISH_DOWNLOAD = 1000;
 
-TFormFileMessage::TFormFileMessage(TMessageData msg, QWidget *parent) :
+TFormFileMessage::TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::TFormFileMessage)
 {
@@ -17,6 +17,20 @@ TFormFileMessage::TFormFileMessage(TMessageData msg, QWidget *parent) :
     _FileID = msg.FileId;
     _FileName = msg.Text;
     connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(PushButton()));
+
+    ui->horizontalLayout->removeItem(ui->horizontalSpacer);
+    if (isMyMsg) {
+        ui->horizontalLayout->insertSpacerItem(0, ui->horizontalSpacer);
+        //ui->widget->setStyleSheet("");
+        //ui->widget->setStyleSheet("background-color: #0055ff;color : rgb(255, 255, 255);border-radius: 10px;");
+        //ui->widget->update();
+    }
+    else {
+        ui->horizontalLayout->addSpacerItem(ui->horizontalSpacer);
+        //ui->widget->setStyleSheet("");
+        //ui->widget->setStyleSheet("background-color: #003399;color : rgb(255, 255, 255);border-radius: 10px;");
+        //ui->widget->update();
+    }
 }
 
 void TFormFileMessage::FinishDownload()

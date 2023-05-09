@@ -1,5 +1,5 @@
-#ifndef TEXTMESSAGE_H
-#define TEXTMESSAGE_H
+#ifndef FORMTEXTMESSAGE_H
+#define FORMTEXTMESSAGE_H
 
 #include <QWidget>
 #include <QString>
@@ -14,7 +14,6 @@ class TTextMessage : public QWidget
     Q_OBJECT
 
 public:
-    TTextMessage(QString login, QString text, QString time, QWidget *parent = nullptr);
     TTextMessage(TMessageData msg, bool isMyMsg, QWidget *parent = nullptr);
     ~TTextMessage();
 
@@ -25,4 +24,4 @@ private:
     Ui::TTextMessage *ui;
 };
 
-#endif // TEXTMESSAGE_H
+#endif // FORMTEXTMESSAGE_H

@@ -24,7 +24,7 @@ bool TAuthorizationWindow::HostExists()
         Connected = ConnectToHost();
     }
     qDebug() << "   Successfully connected";
-    return false;
+    return true;
 }
 
 bool TAuthorizationWindow::ConnectToHost()

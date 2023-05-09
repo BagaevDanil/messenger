@@ -11,6 +11,8 @@ int TIME_AUTOMATIC_SCROLL_DOWN = 50;
 int TIME_AUTOMATIC_SCROLL_HISTORY = 80;
 int TIME_PAUSE_BEFORE_DOWNLOAD = 300;
 int BYTE_DOWNLOAD_PACK_SIZE = 32768;
+int TIME_PAUSE_REQUEST_HISTORY = 300;
+
 
 bool TChatWindow::HostExists()
 {
@@ -28,6 +30,7 @@ bool TChatWindow::HostExists()
         }
         Connected = ConnectToHost();
     }
+    QMessageBox::information(this, "Подключение", "Подключение было восстановлено");
     qDebug() << "   Successfully connected";
     return false;
 }
@@ -72,6 +75,12 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     , Connected(false)
 {
     ui->setupUi(this);
+    ui->progressBar->setVisible(false);
+
+    _TextField = new CustomTextEdit(this);
+    _TextField->setGeometry(QRect(20, 450, 270, 60));
+    connect(_TextField, SIGNAL(sendMsg()), this, SLOT(TextFieldPress()));
+    connect(ui->pushButtonSend, SIGNAL(clicked()), this, SLOT(TextFieldPress()));
 
     ui->scrollArea->setWidgetResizable(true);
     ui->pushButtonToBottom->setVisible(false);
@@ -82,13 +91,13 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
 
     connect(ui->scrollArea->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(ChangeVericalScroll(int)));
 
-    // Connected = ConnectToHost();
-    HostExists();
+    Connected = ConnectToHost();
+    // HostExists();
     if (!Connected) {
         throw std::logic_error("No connection");
     }
 
-    QTimer::singleShot(300, this, [this](){
+    QTimer::singleShot(TIME_PAUSE_REQUEST_HISTORY, this, [this](){
         SendDataToServer(_CurInd, ETypeAction::MESSAGE_HISTORY);
     });
 }
@@ -161,13 +170,40 @@ void TChatWindow::SendFileToServer(QString fileName)
         return;
     }
 
+    StartLocalLoad(byteArray.size());
     QTimer::singleShot(TIME_PAUSE_BEFORE_DOWNLOAD, this, [this, byteArray](){
         int byteSend;
         for (byteSend = 0; byteSend < byteArray.size(); byteSend += BYTE_DOWNLOAD_PACK_SIZE) {
+            UpdateLocalLoad(BYTE_DOWNLOAD_PACK_SIZE);
             _SocketDownload->write(byteArray.mid(byteSend, BYTE_DOWNLOAD_PACK_SIZE));
         }
         _SocketDownload->write(byteArray.mid(byteSend, byteArray.size() - byteSend));
+        FinishLocalLoad();
     });
+}
+
+void TChatWindow::FinishLocalLoad()
+{
+    int TIME_PAUSE_FINISH_DOWNLOAD = 600;
+    ui->progressBar->setValue(ui->progressBar->maximum());
+    QTimer::singleShot(TIME_PAUSE_FINISH_DOWNLOAD, [this] {
+        ui->progressBar->setVisible(false);
+        _TextField->setVisible(true);
+    });
+}
+
+void TChatWindow::UpdateLocalLoad(int size)
+{
+    ui->progressBar->setValue(ui->progressBar->value() + size);
+}
+
+void TChatWindow::StartLocalLoad(int size)
+{
+    ui->progressBar->setMinimum(0);
+    ui->progressBar->setMaximum(size);
+    ui->progressBar->setValue(0);
+    ui->progressBar->setVisible(true);
+    _TextField->setVisible(false);
 }
 
 void TChatWindow::DownloadFileFromHost(TFormFileMessage* file)
@@ -195,7 +231,7 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
     }
     else {
         qDebug() << "   MessageFile <" << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-        msgForm = new TFormFileMessage(msg, this);
+        msgForm = new TFormFileMessage(msg, isMyMsg, this);
         connect(msgForm, SIGNAL(DownloadFile(TFormFileMessage*)), this, SLOT(DownloadFileFromHost(TFormFileMessage*)));
     }
 
@@ -242,7 +278,7 @@ void TChatWindow::SlotReadyRead()
         return;
     }
 
-    if (_Downloading) {
+    if (_Downloading && socket == _SocketDownload) {
         DownloaIterations();
         return;
     }
@@ -300,11 +336,6 @@ void TChatWindow::SlotReadyRead()
     }
 }
 
-void TChatWindow::on_pushButtonSend_clicked()
-{
-    on_lineEdit_returnPressed();
-}
-
 void TChatWindow::SetShiftHistory(int prevH)
 {
     int newH = ui->scrollArea->verticalScrollBar()->maximum();
@@ -318,14 +349,15 @@ void TChatWindow::on_pushButtonToBottom_clicked()
 }
 
 
-void TChatWindow::on_lineEdit_returnPressed()
+void TChatWindow::TextFieldPress()
 {
+    qDebug() << "-Press";
     if (HostExists()) {
-        TMessageData msg(_UserLogin, ui->lineEdit->text(), "", TMessageData::ETypeMessage::TEXT);
+        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT);
+        _TextField->clear();
         SendDataToServer(msg, ETypeAction::MESSAGE);
     }
 }
-
 
 void TChatWindow::on_pushButton_clicked()
 {

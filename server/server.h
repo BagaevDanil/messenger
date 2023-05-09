@@ -17,7 +17,6 @@ public:
     bool StartServer();
 
 public:
-    QTcpSocket* socket;
     struct DataDownloadFileUser {
         bool Downloading;
         int  FileByteSize;
@@ -25,8 +24,7 @@ public:
         QString FileNameDownload;
         QString UserLogin;
 
-        DataDownloadFileUser()
-            : Downloading(false){}
+        DataDownloadFileUser() : Downloading(false){}
     };
 
     struct TFile{
@@ -35,19 +33,15 @@ public:
     };
 
 private:
+     QTcpSocket* _Socket;
      QSet<QTcpSocket*> _ArrSocket;
      QByteArray _Data;
      QVector<TMessageData> _ArrMessage;
      QVector<TFile> _ArrFile;
      QSqlDatabase _DB;
+     QMap<int, DataDownloadFileUser> _MapDownloadData;
 
-     //bool _Downloading;
-     //int  _FileByteSize;
-     //QByteArray _DataDownload;
-     //QString _FileNameDownload;
-
-     QMap<int, DataDownloadFileUser> mapDownloadData;
-
+private:
      template <class TypeData>
      void SendDataToAllClients(TypeData msg, ETypeAction typeAction);
 
@@ -62,8 +56,6 @@ private:
      void SendFileToClient(QTcpSocket* socket, int fileId);
      ETypeAnsRegistration UserRegistration(QString login, QString pass);
      bool CheckingLoginAvailability(QString login);
-
-
 
 public slots:  
     void incomingConnection(qintptr socketDescriptor);

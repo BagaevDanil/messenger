@@ -16,8 +16,8 @@ class TFormFileMessage : public QWidget
 public:
     explicit TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *parent = nullptr);
     ~TFormFileMessage();
-    const int& GetFileID();
-    const QString& GetFileName();
+    const int& GetFileID() const;
+    const QString& GetFileName() const;
     QProgressBar* GetProgressBar();
     void FinishDownload();
     void UpdateDownload(int size);
