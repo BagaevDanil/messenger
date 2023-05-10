@@ -77,11 +77,12 @@ QDataStream& operator<< (QDataStream &out, TMessageData &msg)
 
 TMessageData::TMessageData(){}
 
-TMessageData::TMessageData(QString login, QString text, QString time, ETypeMessage type)
+TMessageData::TMessageData(QString login, QString text, QString time, ETypeMessage type, int ind)
     : Login(login)
     , Text(text)
     , Time(time)
-    , Type(type){}
+    , Type(type)
+    , Ind(ind){}
 
 
 QDataStream& operator>> (QDataStream &in, TMessagePack &msgPack)

@@ -59,13 +59,14 @@ struct TMessageData {
     };
 
     TMessageData();
-    TMessageData(QString login, QString text, QString time, ETypeMessage type);
+    TMessageData(QString login, QString text, QString time, ETypeMessage type, int ind = 0);
 
     QString Login;
     QString Text;
     QString Time;
     ETypeMessage Type;
     int FileId;
+    int Ind;
 
     friend QDataStream& operator>> (QDataStream& in, TMessageData& msg);
     friend QDataStream& operator<< (QDataStream &out, TMessageData &msg);

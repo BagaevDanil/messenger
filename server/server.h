@@ -30,6 +30,7 @@ public:
     struct TFile{
         QByteArray Data;
         QString Name;
+        int Ind;
     };
 
 private:
@@ -40,6 +41,8 @@ private:
      QVector<TFile> _ArrFile;
      QSqlDatabase _DB;
      QMap<int, DataDownloadFileUser> _MapDownloadData;
+     int _CurInd;
+     int _CurIndFiles;
 
 private:
      template <class TypeData>
@@ -56,6 +59,10 @@ private:
      void SendFileToClient(QTcpSocket* socket, int fileId);
      ETypeAnsRegistration UserRegistration(QString login, QString pass);
      bool CheckingLoginAvailability(QString login);
+     void SaveMsgToDB(TMessageData msg);
+     void LoadMsgFromDB();
+     void SaveFileToDB(TFile file);
+     void LoadFileFromDB();
 
 public slots:  
     void incomingConnection(qintptr socketDescriptor);

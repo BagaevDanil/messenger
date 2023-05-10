@@ -23,6 +23,22 @@ bool TServer::StartServer()
         return false;
     }
     qDebug() << "-Connect to DB";
+    QSqlQuery* query = new QSqlQuery(_DB);
+    //query->exec("DELETE FROM Messages");
+    //query->exec("DELETE FROM Files");
+    // bool result = query->exec("CREATE TABLE Messages (Login TEXT, Text TEXT, Time TEXT, Ind TEXT);");
+    //QSqlQuery* query = new QSqlQuery(_DB);
+    //bool result = query->exec("CREATE TABLE Files (Ind TEXT, Data BLOB, FileName TEXT);");
+    //bool result = query->exec("ALTER TABLE Messages ADD IndFile TEXT;");
+    /*if (result) {
+        qDebug() << "True";
+    }
+    else {
+        qDebug() << query->lastError().text();
+    }*/
+
+    LoadMsgFromDB();
+    LoadFileFromDB();
 
     if (!this->listen(QHostAddress::Any, HOST::PORT)) {
         qDebug() << "-Error start server!";
@@ -31,6 +47,107 @@ bool TServer::StartServer()
     qDebug() << "-Start server!";
 
     return true;
+}
+
+void TServer::SaveFileToDB(TFile file)
+{
+    qDebug() << "   -Save file to DB:";
+    QSqlQuery* query = new QSqlQuery(_DB);
+    query->prepare(
+        "INSERT INTO Files\
+            (Ind, Data, FileName)\
+         VALUES\
+            (:ind, :data, :name)"
+    );
+    query->bindValue(":ind", file.Ind);
+    query->bindValue(":data", file.Data);
+    query->bindValue(":name", file.Name);
+    bool result = query->exec();
+
+    if (result) {
+        qDebug() << "       Add :" << file.Ind << file.Data << file.Name;
+    }
+    else {
+        qDebug() << "       Error :" << query->lastError().text();
+    }
+}
+
+void TServer::LoadFileFromDB()
+{
+    qDebug() << "-Load files :";
+    QSqlQuery* query = new QSqlQuery(_DB);
+    query->exec(
+        "SELECT\
+                Ind, Data, FileName\
+         FROM\
+                Files"
+    );
+    _CurIndFiles = 0;
+    while(query->next()) {
+        int ind = query->value(0).toString().toInt();
+        QByteArray data = query->value(1).toByteArray();
+        QString fileName = query->value(2).toString();
+        qDebug() << "   file:" << ind << fileName;
+
+        if (ind != _CurIndFiles) {
+            throw std::logic_error("Error matching indexes in the DB");
+        }
+        TFile file{data, fileName, _CurIndFiles++};
+        _ArrFile.push_back(file);
+    }
+}
+
+void TServer::SaveMsgToDB(TMessageData msg)
+{
+    qDebug() << "   -Save msg to DB:";
+    QSqlQuery* query = new QSqlQuery(_DB);
+    query->prepare(
+        "INSERT INTO Messages\
+            (Login, Text, Time, Ind, Type, IndFile)\
+        VALUES\
+            (:login, :text, :time, :index, :type, :indFile)"
+    );
+    query->bindValue(":login", msg.Login);
+    query->bindValue(":text", msg.Text);
+    query->bindValue(":time", msg.Time);
+    query->bindValue(":index", QString::number(msg.Ind));
+    query->bindValue(":type", QString::number(int(msg.Type)));
+    query->bindValue(":indFile", QString::number(int(msg.FileId)));
+    bool result = query->exec();
+
+    if (result) {
+        qDebug() << "       Add :" << msg.Ind << msg.Login << msg.Text << msg.Time << msg.Type << msg.FileId;
+    }
+    else {
+        qDebug() << "       Error :" << query->lastError().text();
+    }
+}
+
+void TServer::LoadMsgFromDB()
+{
+    qDebug() << "Load msg :";
+    QSqlQuery* query = new QSqlQuery(_DB);
+    query->exec(
+        "SELECT\
+            Login, Text, Time, Ind, Type, IndFile\
+         FROM\
+            Messages"
+    );
+    _CurInd = 0;
+
+    while(query->next()) {
+        QString login = query->value(0).toString();
+        QString text = query->value(1).toString();
+        QString time = query->value(2).toString();
+        int ind = query->value(3).toString().toInt();
+        int type = query->value(4).toString().toInt();
+        int fileId = query->value(5).toString().toInt();
+        qDebug() << "   msg:" << _CurInd << login << text << time << type << fileId;
+
+        TMessageData msg(login, text, time, TMessageData::ETypeMessage(type), _CurInd++);
+        msg.FileId = fileId;
+        _ArrMessage.push_back(msg);
+    }
 }
 
 void TServer::incomingConnection(qintptr socketDescriptor)
@@ -137,15 +254,20 @@ void TServer::DownloaIterations(DataDownloadFileUser& userDownloadInfo, QTcpSock
         userDownloadInfo.Downloading = false;
         qDebug() << "Finish downloading, size : " << userDownloadInfo.DataDownload.size();
 
+        TFile file{userDownloadInfo.DataDownload, userDownloadInfo.FileNameDownload, _CurIndFiles++};
+        _ArrFile.push_back(file);
+        SaveFileToDB(file);
+
         TMessageData msg;
         msg.Time = QTime::currentTime().toString("hh:mm:ss");
         msg.Login = userDownloadInfo.UserLogin;
         msg.Text = userDownloadInfo.FileNameDownload;
         msg.Type = TMessageData::ETypeMessage::FILE;
-        msg.FileId = _ArrFile.size();
-
+        msg.FileId = file.Ind;
+        msg.Ind = _CurInd++;
         _ArrMessage.push_back(msg);
-        _ArrFile.push_back({userDownloadInfo.DataDownload, userDownloadInfo.FileNameDownload});
+        SaveMsgToDB(msg);
+
         SendDataToAllClients(msg, ETypeAction::MESSAGE);
     }
 }
@@ -190,7 +312,9 @@ void TServer::SlotReadyRead()
         input >> msg;
         msg.Time = QTime::currentTime().toString("hh:mm:ss");
         msg.Type = TMessageData::ETypeMessage::TEXT;
+        msg.Ind = _CurInd++;
         _ArrMessage.push_back(msg);
+        SaveMsgToDB(msg);
 
         qDebug() << "   Msg (" << msg.Login << ") : " << msg.Text << " | " << msg.Time;
         SendDataToAllClients(msg, ETypeAction::MESSAGE);
