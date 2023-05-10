@@ -21,6 +21,14 @@ class TChatWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    static const int HEIGHT_AUTOMATIC_SCROLL_DOWN;
+    static const int TIME_AUTOMATIC_SCROLL_DOWN;
+    static const int TIME_AUTOMATIC_SCROLL_HISTORY;
+    static const int TIME_PAUSE_BEFORE_DOWNLOAD;
+    static const int BYTE_DOWNLOAD_PACK_SIZE;
+    static const int TIME_PAUSE_REQUEST_HISTORY;
+
+public:
     explicit TChatWindow(QString userLogin, QWidget *parent = nullptr);
     ~TChatWindow();
     bool HostExists();
@@ -51,6 +59,8 @@ private:
     QByteArray _DataDownload;
     QString _FileNameDownload;
     TFormFileMessage* _FormFile;
+
+    QVector<QWidget> _MsgFeed;
 
 private:
     void AddNewMessage(TMessageData msg, bool toBottom);

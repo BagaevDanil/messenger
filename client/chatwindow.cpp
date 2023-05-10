@@ -6,13 +6,12 @@
 #include <QFile>
 #include <QFileDialog>
 
-int HEIGHT_AUTOMATIC_SCROLL_DOWN = 80;
-int TIME_AUTOMATIC_SCROLL_DOWN = 50;
-int TIME_AUTOMATIC_SCROLL_HISTORY = 80;
-int TIME_PAUSE_BEFORE_DOWNLOAD = 300;
-int BYTE_DOWNLOAD_PACK_SIZE = 32768;
-int TIME_PAUSE_REQUEST_HISTORY = 300;
-
+const int TChatWindow::HEIGHT_AUTOMATIC_SCROLL_DOWN = 80;
+const int TChatWindow::TIME_AUTOMATIC_SCROLL_DOWN = 50;
+const int TChatWindow::TIME_AUTOMATIC_SCROLL_HISTORY = 80;
+const int TChatWindow::TIME_PAUSE_BEFORE_DOWNLOAD = 300;
+const int TChatWindow::BYTE_DOWNLOAD_PACK_SIZE = 32768;
+const int TChatWindow::TIME_PAUSE_REQUEST_HISTORY = 300;
 
 bool TChatWindow::HostExists()
 {
@@ -56,7 +55,17 @@ bool TChatWindow::ConnectToHost()
 
     if (_Socket->waitForConnected()) {
         if (_Socket->waitForReadyRead()) {
+            while (_Layout->count() > 1) {
+                auto* item = _Layout->takeAt(1);
+                auto* widget = item->widget();
+                if (widget) {
+                    widget->deleteLater();
+                }
+            }
             SendDataToServer(QString(""), ETypeAction::SUBSCRIBE_TO_MESSAGES);
+            QTimer::singleShot(TIME_PAUSE_REQUEST_HISTORY, this, [this](){
+                SendDataToServer(-1, ETypeAction::MESSAGE_HISTORY);
+            });
             return true;
         }
     }
@@ -97,10 +106,6 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     if (!Connected) {
         throw std::logic_error("No connection");
     }
-
-    QTimer::singleShot(TIME_PAUSE_REQUEST_HISTORY, this, [this](){
-        SendDataToServer(_CurInd, ETypeAction::MESSAGE_HISTORY);
-    });
 }
 
 void TChatWindow::ChangeVericalScroll(int value)

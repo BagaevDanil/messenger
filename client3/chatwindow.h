@@ -52,6 +52,8 @@ private:
     QString _FileNameDownload;
     TFormFileMessage* _FormFile;
 
+    QVector<QWidget> _MsgFeed;
+
 private:
     void AddNewMessage(TMessageData msg, bool toBottom);
     void DownloaIterations();

@@ -48,11 +48,9 @@ QLineEdit {
 
 QLineEdit:focus {
   border-color: #0077FF;
-  box-shadow: 0 0 5px #0077FF;
 }
 
 QLabel {
-	/*color: rgb(0, 0, 255);*/
 	color: rgb(0, 0, 0);
 	font-weight: bold;
   	font-size: 12px;

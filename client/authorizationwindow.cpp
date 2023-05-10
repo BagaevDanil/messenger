@@ -2,11 +2,6 @@
 #include "ui_authorizationwindow.h"
 #include <QMessageBox>
 
-enum ETypePadge {
-    AUTHORIZATION_PADGE,
-    REGISTRATION_PADGE,
-};
-
 bool TAuthorizationWindow::HostExists()
 {
     if (Connected) {

@@ -16,6 +16,12 @@ class TAuthorizationWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    enum ETypePadge {
+        AUTHORIZATION_PADGE,
+        REGISTRATION_PADGE,
+    };
+
+public:
     explicit TAuthorizationWindow(QWidget *parent = nullptr);
     ~TAuthorizationWindow();
     bool HostExists();

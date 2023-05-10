@@ -56,7 +56,17 @@ bool TChatWindow::ConnectToHost()
 
     if (_Socket->waitForConnected()) {
         if (_Socket->waitForReadyRead()) {
+            while (_Layout->count() > 1) {
+                auto* item = _Layout->takeAt(1);
+                auto* widget = item->widget();
+                if (widget) {
+                    widget->deleteLater();
+                }
+            }
             SendDataToServer(QString(""), ETypeAction::SUBSCRIBE_TO_MESSAGES);
+            QTimer::singleShot(TIME_PAUSE_REQUEST_HISTORY, this, [this](){
+                SendDataToServer(-1, ETypeAction::MESSAGE_HISTORY);
+            });
             return true;
         }
     }
@@ -97,10 +107,6 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     if (!Connected) {
         throw std::logic_error("No connection");
     }
-
-    QTimer::singleShot(TIME_PAUSE_REQUEST_HISTORY, this, [this](){
-        SendDataToServer(_CurInd, ETypeAction::MESSAGE_HISTORY);
-    });
 }
 
 void TChatWindow::ChangeVericalScroll(int value)
