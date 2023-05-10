@@ -19,15 +19,9 @@ TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, QWidget *parent)
     ui->horizontalLayout->removeItem(ui->horizontalSpacer);
     if (isMyMsg) {
         ui->horizontalLayout->insertSpacerItem(0, ui->horizontalSpacer);
-        //ui->widget->setStyleSheet("");
-        //ui->widget->setStyleSheet("background-color: #0055ff;color : rgb(255, 255, 255);border-radius: 10px;");
-        //ui->widget->update();
     }
     else {
         ui->horizontalLayout->addSpacerItem(ui->horizontalSpacer);
-        //ui->widget->setStyleSheet("");
-        //ui->widget->setStyleSheet("background-color: #003399;color : rgb(255, 255, 255);border-radius: 10px;");
-        //ui->widget->update();
     }
 }
 

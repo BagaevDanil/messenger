@@ -2,7 +2,7 @@
 #include "ui_formfilemessage.h"
 #include <QTimer>
 
-int TIME_PAUSE_FINISH_DOWNLOAD = 1000;
+const int TFormFileMessage::TIME_PAUSE_FINISH_DOWNLOAD = 1000;
 
 TFormFileMessage::TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *parent) :
     QWidget(parent),
@@ -21,15 +21,9 @@ TFormFileMessage::TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *pare
     ui->horizontalLayout->removeItem(ui->horizontalSpacer);
     if (isMyMsg) {
         ui->horizontalLayout->insertSpacerItem(0, ui->horizontalSpacer);
-        //ui->widget->setStyleSheet("");
-        //ui->widget->setStyleSheet("background-color: #0055ff;color : rgb(255, 255, 255);border-radius: 10px;");
-        //ui->widget->update();
     }
     else {
         ui->horizontalLayout->addSpacerItem(ui->horizontalSpacer);
-        //ui->widget->setStyleSheet("");
-        //ui->widget->setStyleSheet("background-color: #003399;color : rgb(255, 255, 255);border-radius: 10px;");
-        //ui->widget->update();
     }
 }
 

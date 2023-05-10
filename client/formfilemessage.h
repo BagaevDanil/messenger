@@ -14,6 +14,9 @@ class TFormFileMessage : public QWidget
     Q_OBJECT
 
 public:
+    static const int TIME_PAUSE_FINISH_DOWNLOAD;
+
+public:
     explicit TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *parent = nullptr);
     ~TFormFileMessage();
     const int& GetFileID() const;
