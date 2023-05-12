@@ -421,7 +421,7 @@ void TChatWindow::TextFieldPress()
         return;
     }
 
-    qDebug() << "-Press";
+    qDebug() << "-Press send";
     if (_TextField->toPlainText().isEmpty()) {
         return;
     }
@@ -453,6 +453,11 @@ void TChatWindow::on_pushButtonEditingCancel_clicked()
 void TChatWindow::on_pushButtonSendApply_clicked()
 {
     qDebug() << "   Apply editing Msg";
+    if (_TextField->toPlainText().isEmpty()) {
+        QMessageBox::critical(this, "Ошибка", "Пустое сообщение!");
+        return;
+    }
+
     TEditMessageInfo msg(_TextField->toPlainText(), _CurEditMsgId);
     SendDataToServer(msg, ETypeAction::EDIT_MESSAGE);
     TurnOffEditMod();
