@@ -48,5 +48,5 @@
 *	Files - хранит отправленные пользователями файлы (id файла, название и расширение файла, файл в формате массива байтов)
 
 ## Диаграмма классов
-![...](https://github.com/BagaevDanil/messenger/blob/main/other/client.png)
-![...](https://github.com/BagaevDanil/messenger/blob/main/other/server.png)
+![...](https://github.com/BagaevDanil/messenger/blob/main/other/client-cd.png)
+![...](https://github.com/BagaevDanil/messenger/blob/main/other/server-cd.png)
