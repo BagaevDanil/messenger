@@ -4,6 +4,8 @@
 #include <QScrollBar>
 #include <QSpacerItem>
 
+const int TTextMessage::TIME_PAUSE_UPDATE_SIZE_TEXT = 2;
+
 TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent)
     : TFormMessage(msg.Ind)
     , ui(new Ui::TTextMessage)
@@ -14,7 +16,7 @@ TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidg
     ui->labelTime->setText(msg.Time);
 
     ui->textEdit->setText(msg.Text);
-    QTimer::singleShot(2, this, &TTextMessage::onTextChanged);
+    QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TTextMessage::onTextChanged);
     connect(ui->pushButtonEditing, SIGNAL(clicked()), this, SLOT(PushButtonEdit()));
 
     ui->horizontalLayout->removeItem(ui->horizontalSpacer);
@@ -38,6 +40,7 @@ TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidg
 void TTextMessage::SetText(QString text)
 {
     ui->textEdit->setText(text);
+    QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TTextMessage::onTextChanged);
 }
 
 void TTextMessage::SetEditMark(bool val)
