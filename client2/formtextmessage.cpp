@@ -4,7 +4,7 @@
 #include <QScrollBar>
 #include <QSpacerItem>
 
-TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent)
+TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, QWidget *parent)
     : ui(new Ui::TTextMessage)
 {
     ui->setupUi(this);
@@ -26,23 +26,11 @@ TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidg
         ui->horizontalLayout->addSpacerItem(ui->horizontalSpacer);
         ui->pushButtonEditing->setVisible(false);
     }
-
-    if (isEditing) {
-        ui->labelEditMark->setVisible(true);
-    }
-    else {
-        ui->labelEditMark->setVisible(false);
-    }
 }
 
 void TTextMessage::SetText(QString text)
 {
     ui->textEdit->setText(text);
-}
-
-void TTextMessage::SetEditMark(bool val)
-{
-    ui->labelEditMark->setVisible(val);
 }
 
 void TTextMessage::PushButtonEdit()

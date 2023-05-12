@@ -252,7 +252,7 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
     bool isMyMsg = msg.Login == _UserLogin;
     if (msg.Type == TMessageData::ETypeMessage::TEXT) {
         qDebug() << "   MessageText <" << msg.Ind << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-        msgForm = new TTextMessage(msg, isMyMsg, msg.IsEditing, this);
+        msgForm = new TTextMessage(msg, isMyMsg, this);
         connect(msgForm, SIGNAL(EditingMsg(int, QString)), this, SLOT(SlotEditingMsg(int, QString)));
     }
     else {
@@ -367,7 +367,6 @@ void TChatWindow::SlotReadyRead()
         input >> msg;
         qDebug() << "   Edit message :" << msg.MsgId;
         _MapMsg[msg.MsgId]->SetText(msg.NewText);
-        _MapMsg[msg.MsgId]->SetEditMark(true);
     }
     else {
         qDebug() << "  Error action";
@@ -407,7 +406,7 @@ void TChatWindow::TextFieldPress()
     }
 
     if (HostExists()) {
-        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT, false);
+        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT);
         _TextField->clear();
         SendDataToServer(msg, ETypeAction::MESSAGE);
     }

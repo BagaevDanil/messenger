@@ -27,7 +27,6 @@ public:
     void UpdateDownload(int size);
     void StartDownload(int fileSize);
     void SetText(QString text);
-    void SetEditMark(bool val);
 
 signals:
     void DownloadFile(TFormFileMessage* file);

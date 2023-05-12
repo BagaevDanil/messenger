@@ -32,8 +32,6 @@ void TFormFileMessage::SetText(QString text)
     ui->pushButton->setText(text);
 }
 
-void TFormFileMessage::SetEditMark(bool val){}
-
 void TFormFileMessage::FinishDownload()
 {
     ui->progressBar->setValue(ui->progressBar->maximum());
