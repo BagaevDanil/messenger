@@ -4,9 +4,9 @@
 #include <QScrollBar>
 #include <QSpacerItem>
 
-const int TTextMessage::TIME_PAUSE_UPDATE_SIZE_TEXT = 2;
+const int TFormTextMessage::TIME_PAUSE_UPDATE_SIZE_TEXT = 2;
 
-TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent)
+TFormTextMessage::TFormTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent)
     : TFormMessage(msg.Ind)
     , ui(new Ui::TTextMessage)
 {
@@ -16,7 +16,7 @@ TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidg
     ui->labelTime->setText(msg.Time);
 
     ui->textEdit->setText(msg.Text);
-    QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TTextMessage::onTextChanged);
+    QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TFormTextMessage::onTextChanged);
     connect(ui->pushButtonEditing, SIGNAL(clicked()), this, SLOT(PushButtonEdit()));
 
     ui->horizontalLayout->removeItem(ui->horizontalSpacer);
@@ -37,24 +37,24 @@ TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidg
     }
 }
 
-void TTextMessage::SetText(QString text)
+void TFormTextMessage::SetText(QString text)
 {
     ui->textEdit->setText(text);
-    QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TTextMessage::onTextChanged);
+    QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TFormTextMessage::onTextChanged);
 }
 
-void TTextMessage::SetEditMark(bool val)
+void TFormTextMessage::SetEditMark(bool val)
 {
     ui->labelEditMark->setVisible(val);
 }
 
-void TTextMessage::PushButtonEdit()
+void TFormTextMessage::PushButtonEdit()
 {
     //qDebug() << "-Push EditButton";
     emit EditingMsg(_MsgId, ui->textEdit->toPlainText());
 }
 
-void TTextMessage::onTextChanged()
+void TFormTextMessage::onTextChanged()
 {
   QSize size = ui->textEdit->document()->size().toSize();
   ui->textEdit->setFixedHeight( size.height());
@@ -62,7 +62,7 @@ void TTextMessage::onTextChanged()
 
 }
 
-TTextMessage::~TTextMessage()
+TFormTextMessage::~TFormTextMessage()
 {
     delete ui;
 }

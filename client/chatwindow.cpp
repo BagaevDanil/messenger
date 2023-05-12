@@ -253,7 +253,7 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
     bool isMyMsg = msg.Login == _UserLogin;
     if (msg.Type == TMessageData::ETypeMessage::TEXT) {
         qDebug() << "   MessageText <" << msg.Ind << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-        msgForm = new TTextMessage(msg, isMyMsg, msg.IsEditing, this);
+        msgForm = new TFormTextMessage(msg, isMyMsg, msg.IsEditing, this);
         connect(msgForm, SIGNAL(EditingMsg(int, QString)), this, SLOT(SlotEditingMsg(int, QString)));
     }
     else {

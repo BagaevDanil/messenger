@@ -10,7 +10,7 @@ namespace Ui {
 class TTextMessage;
 }
 
-class TTextMessage : public TFormMessage
+class TFormTextMessage : public TFormMessage
 {
     Q_OBJECT
 
@@ -18,8 +18,8 @@ public:
     static const int TIME_PAUSE_UPDATE_SIZE_TEXT;
 
 public:
-    TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent = nullptr);
-    ~TTextMessage();
+    TFormTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent = nullptr);
+    ~TFormTextMessage();
     void SetText(QString text) override;
     void SetEditMark(bool val) override;
 
