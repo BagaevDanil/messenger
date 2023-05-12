@@ -5,13 +5,13 @@
 #include <QSpacerItem>
 
 TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent)
-    : ui(new Ui::TTextMessage)
+    : TFormMessage(msg.Ind)
+    , ui(new Ui::TTextMessage)
 {
     ui->setupUi(this);
 
     ui->labelLogin->setText(msg.Login);
     ui->labelTime->setText(msg.Time);
-    _MsgId = msg.Ind;
 
     ui->textEdit->setText(msg.Text);
     QTimer::singleShot(2, this, &TTextMessage::onTextChanged);

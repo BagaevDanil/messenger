@@ -17,8 +17,8 @@ class TTextMessage : public TFormMessage
 public:
     TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent = nullptr);
     ~TTextMessage();
-    void SetText(QString text);
-    void SetEditMark(bool val);
+    void SetText(QString text) override;
+    void SetEditMark(bool val) override;
 
 public slots:
     void onTextChanged();
@@ -29,7 +29,6 @@ signals:
 
 private:
     Ui::TTextMessage *ui;
-    int _MsgId;
 };
 
 #endif // FORMTEXTMESSAGE_H

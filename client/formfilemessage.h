@@ -26,8 +26,7 @@ public:
     void FinishDownload();
     void UpdateDownload(int size);
     void StartDownload(int fileSize);
-    void SetText(QString text);
-    void SetEditMark(bool val);
+    void SetText(QString text) override;
 
 signals:
     void DownloadFile(TFormFileMessage* file);
@@ -39,7 +38,6 @@ private:
     Ui::TFormFileMessage *ui;
     int _FileID;
     QString _FileName;
-    int _MsgId;
 };
 
 #endif // FORMFILEMESSAGE_H

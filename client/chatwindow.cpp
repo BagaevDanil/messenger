@@ -79,11 +79,12 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     , ui(new Ui::TChatWindow)
     , _Socket(nullptr)
     , _SocketDownload(nullptr)
+    , Connected(false)
     , _CurInd(-1)
+    , _editingNow(false)
     , _UserLogin(userLogin)
     , _Button(nullptr)
     , _Downloading(false)
-    , Connected(false)
 {
     ui->setupUi(this);
     ui->progressBar->setVisible(false);
@@ -391,7 +392,12 @@ void TChatWindow::SlotEditingMsg(int msgId, QString text)
 {
     qDebug() << "-Editing Msg :" << msgId;
     _CurEditMsgId = msgId;
+    TurnOnEditMod(text);
+}
 
+void TChatWindow::TurnOnEditMod(QString text)
+{
+    _editingNow = true;
     _TextField->setPlainText(text);
     ui->pushButtonEditingCancel->setVisible(true);
     ui->pushButtonSendApply->setVisible(true);
@@ -399,8 +405,22 @@ void TChatWindow::SlotEditingMsg(int msgId, QString text)
     ui->pushButtonSendFIle->setVisible(false);
 }
 
+void TChatWindow::TurnOffEditMod()
+{
+    _editingNow = false;
+    _TextField->clear();
+    ui->pushButtonEditingCancel->setVisible(false);
+    ui->pushButtonSendApply->setVisible(false);
+    ui->pushButtonSend->setVisible(true);
+    ui->pushButtonSendFIle->setVisible(true);
+}
+
 void TChatWindow::TextFieldPress()
 {
+    if (_editingNow) {
+        return;
+    }
+
     qDebug() << "-Press";
     if (_TextField->toPlainText().isEmpty()) {
         return;
@@ -426,11 +446,7 @@ void TChatWindow::on_pushButtonSendFIle_clicked()
 void TChatWindow::on_pushButtonEditingCancel_clicked()
 {
     qDebug() << "   Cancel editing Msg";
-    _TextField->clear();
-    ui->pushButtonEditingCancel->setVisible(false);
-    ui->pushButtonSendApply->setVisible(false);
-    ui->pushButtonSend->setVisible(true);
-    ui->pushButtonSendFIle->setVisible(true);
+    TurnOffEditMod();
 }
 
 
@@ -439,11 +455,6 @@ void TChatWindow::on_pushButtonSendApply_clicked()
     qDebug() << "   Apply editing Msg";
     TEditMessageInfo msg(_TextField->toPlainText(), _CurEditMsgId);
     SendDataToServer(msg, ETypeAction::EDIT_MESSAGE);
-
-    _TextField->clear();
-    ui->pushButtonEditingCancel->setVisible(false);
-    ui->pushButtonSendApply->setVisible(false);
-    ui->pushButtonSend->setVisible(true);
-    ui->pushButtonSendFIle->setVisible(true);
+    TurnOffEditMod();
 }
 
