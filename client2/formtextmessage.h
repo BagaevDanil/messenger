@@ -15,13 +15,9 @@ class TTextMessage : public TFormMessage
     Q_OBJECT
 
 public:
-    static const int TIME_PAUSE_UPDATE_SIZE_TEXT;
-
-public:
-    TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent = nullptr);
+    TTextMessage(TMessageData msg, bool isMyMsg, QWidget *parent = nullptr);
     ~TTextMessage();
-    void SetText(QString text) override;
-    void SetEditMark(bool val) override;
+    void SetText(QString text);
 
 public slots:
     void onTextChanged();
@@ -32,6 +28,7 @@ signals:
 
 private:
     Ui::TTextMessage *ui;
+    int _MsgId;
 };
 
 #endif // FORMTEXTMESSAGE_H

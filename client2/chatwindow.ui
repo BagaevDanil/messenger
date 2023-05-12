@@ -41,17 +41,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string/>
-    </property>
-    <property name="icon">
-     <iconset resource="resources.qrc">
-      <normaloff>:/icons/icons/icon_send.png</normaloff>:/icons/icons/icon_send.png</iconset>
-    </property>
-    <property name="iconSize">
-     <size>
-      <width>26</width>
-      <height>26</height>
-     </size>
+     <string>Send</string>
     </property>
    </widget>
    <widget class="QScrollArea" name="scrollArea">
@@ -119,17 +109,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string/>
-    </property>
-    <property name="icon">
-     <iconset resource="resources.qrc">
-      <normaloff>:/icons/icons/icon_to_bottom.png</normaloff>:/icons/icons/icon_to_bottom.png</iconset>
-    </property>
-    <property name="iconSize">
-     <size>
-      <width>20</width>
-      <height>20</height>
-     </size>
+     <string>\/</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButtonSendFIle">
@@ -159,17 +139,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string/>
-    </property>
-    <property name="icon">
-     <iconset resource="resources.qrc">
-      <normaloff>:/icons/icons/icon_file.png</normaloff>:/icons/icons/icon_file.png</iconset>
-    </property>
-    <property name="iconSize">
-     <size>
-      <width>26</width>
-      <height>26</height>
-     </size>
+     <string>File</string>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="lineEditFake">
@@ -249,17 +219,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string/>
-    </property>
-    <property name="icon">
-     <iconset resource="resources.qrc">
-      <normaloff>:/icons/icons/icon_cancel.png</normaloff>:/icons/icons/icon_cancel.png</iconset>
-    </property>
-    <property name="iconSize">
-     <size>
-      <width>26</width>
-      <height>26</height>
-     </size>
+     <string>X</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButtonSendApply">
@@ -289,17 +249,7 @@ QPushButton:pressed {
 </string>
     </property>
     <property name="text">
-     <string/>
-    </property>
-    <property name="icon">
-     <iconset resource="resources.qrc">
-      <normaloff>:/icons/icons/icon_accept.png</normaloff>:/icons/icons/icon_accept.png</iconset>
-    </property>
-    <property name="iconSize">
-     <size>
-      <width>26</width>
-      <height>26</height>
-     </size>
+     <string>V</string>
     </property>
    </widget>
    <zorder>pushButtonSendApply</zorder>
@@ -312,8 +262,6 @@ QPushButton:pressed {
    <zorder>progressBar</zorder>
   </widget>
  </widget>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

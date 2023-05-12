@@ -55,10 +55,7 @@ private:
     QByteArray _Data;
     bool Connected;
     int _CurInd;
-
     int _CurEditMsgId;
-    bool _editingNow;
-
     QString _UserLogin;
     QVBoxLayout* _Layout;
     QWidget* _Container;
@@ -83,8 +80,6 @@ private:
     void UpdateLocalLoad(int size);
     void StartLocalLoad(int size);
     void SendFileToServer(QString fileName);
-    void TurnOnEditMod(QString text);
-    void TurnOffEditMod();
 
 public slots:
     void TextFieldPress();

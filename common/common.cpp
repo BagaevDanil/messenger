@@ -1,5 +1,29 @@
 #include "common.h"
 
+TEditMessageInfo::TEditMessageInfo(){}
+
+TEditMessageInfo::TEditMessageInfo(QString newText, int msgId)
+    : NewText(newText)
+    , MsgId(msgId){}
+
+QDataStream& operator>> (QDataStream& in, TEditMessageInfo& msg)
+{
+    in >> msg.NewText;
+
+    QString str;
+    in >> str;
+    msg.MsgId = str.toInt();
+    return in;
+}
+
+QDataStream& operator<< (QDataStream& out, TEditMessageInfo& msg)
+{
+    out << msg.NewText;
+    out << QString::number(msg.MsgId);
+    return out;
+}
+
+
 TUserInfo::TUserInfo(){}
 
 TUserInfo::TUserInfo(QString login, QString password)
@@ -59,7 +83,11 @@ QDataStream& operator>> (QDataStream &in, TMessageData &msg)
     in >> s;
     msg.Type = TMessageData::ETypeMessage(s.toInt());
     in >> s;
+    msg.Ind = s.toInt();
+    in >> s;
     msg.FileId = s.toInt();
+    in >> s;
+    msg.IsEditing = s.toInt();
 
     return in;
 }
@@ -70,18 +98,21 @@ QDataStream& operator<< (QDataStream &out, TMessageData &msg)
     out << msg.Text;
     out << msg.Time;
     out << QString::number(msg.Type);
+    out << QString::number(msg.Ind);
     out << QString::number(msg.FileId);
+    out << QString::number(msg.IsEditing);
     return out;
 }
 
 
 TMessageData::TMessageData(){}
 
-TMessageData::TMessageData(QString login, QString text, QString time, ETypeMessage type, int ind)
+TMessageData::TMessageData(QString login, QString text, QString time, ETypeMessage type, bool isEditing, int ind)
     : Login(login)
     , Text(text)
     , Time(time)
     , Type(type)
+    , IsEditing(isEditing)
     , Ind(ind){}
 
 

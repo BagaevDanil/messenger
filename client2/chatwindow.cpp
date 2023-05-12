@@ -79,12 +79,11 @@ TChatWindow::TChatWindow(QString userLogin, QWidget *parent)
     , ui(new Ui::TChatWindow)
     , _Socket(nullptr)
     , _SocketDownload(nullptr)
-    , Connected(false)
     , _CurInd(-1)
-    , _editingNow(false)
     , _UserLogin(userLogin)
     , _Button(nullptr)
     , _Downloading(false)
+    , Connected(false)
 {
     ui->setupUi(this);
     ui->progressBar->setVisible(false);
@@ -253,7 +252,7 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
     bool isMyMsg = msg.Login == _UserLogin;
     if (msg.Type == TMessageData::ETypeMessage::TEXT) {
         qDebug() << "   MessageText <" << msg.Ind << msg.Login << "> : " << msg.Text << " | " << msg.Time;
-        msgForm = new TTextMessage(msg, isMyMsg, msg.IsEditing, this);
+        msgForm = new TTextMessage(msg, isMyMsg, this);
         connect(msgForm, SIGNAL(EditingMsg(int, QString)), this, SLOT(SlotEditingMsg(int, QString)));
     }
     else {
@@ -368,7 +367,6 @@ void TChatWindow::SlotReadyRead()
         input >> msg;
         qDebug() << "   Edit message :" << msg.MsgId;
         _MapMsg[msg.MsgId]->SetText(msg.NewText);
-        _MapMsg[msg.MsgId]->SetEditMark(true);
     }
     else {
         qDebug() << "  Error action";
@@ -392,12 +390,7 @@ void TChatWindow::SlotEditingMsg(int msgId, QString text)
 {
     qDebug() << "-Editing Msg :" << msgId;
     _CurEditMsgId = msgId;
-    TurnOnEditMod(text);
-}
 
-void TChatWindow::TurnOnEditMod(QString text)
-{
-    _editingNow = true;
     _TextField->setPlainText(text);
     ui->pushButtonEditingCancel->setVisible(true);
     ui->pushButtonSendApply->setVisible(true);
@@ -405,29 +398,15 @@ void TChatWindow::TurnOnEditMod(QString text)
     ui->pushButtonSendFIle->setVisible(false);
 }
 
-void TChatWindow::TurnOffEditMod()
-{
-    _editingNow = false;
-    _TextField->clear();
-    ui->pushButtonEditingCancel->setVisible(false);
-    ui->pushButtonSendApply->setVisible(false);
-    ui->pushButtonSend->setVisible(true);
-    ui->pushButtonSendFIle->setVisible(true);
-}
-
 void TChatWindow::TextFieldPress()
 {
-    if (_editingNow) {
-        return;
-    }
-
-    qDebug() << "-Press send";
+    qDebug() << "-Press";
     if (_TextField->toPlainText().isEmpty()) {
         return;
     }
 
     if (HostExists()) {
-        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT, false);
+        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT);
         _TextField->clear();
         SendDataToServer(msg, ETypeAction::MESSAGE);
     }
@@ -446,20 +425,24 @@ void TChatWindow::on_pushButtonSendFIle_clicked()
 void TChatWindow::on_pushButtonEditingCancel_clicked()
 {
     qDebug() << "   Cancel editing Msg";
-    TurnOffEditMod();
+    _TextField->clear();
+    ui->pushButtonEditingCancel->setVisible(false);
+    ui->pushButtonSendApply->setVisible(false);
+    ui->pushButtonSend->setVisible(true);
+    ui->pushButtonSendFIle->setVisible(true);
 }
 
 
 void TChatWindow::on_pushButtonSendApply_clicked()
 {
     qDebug() << "   Apply editing Msg";
-    if (_TextField->toPlainText().isEmpty()) {
-        QMessageBox::critical(this, "Ошибка", "Пустое сообщение!");
-        return;
-    }
-
     TEditMessageInfo msg(_TextField->toPlainText(), _CurEditMsgId);
     SendDataToServer(msg, ETypeAction::EDIT_MESSAGE);
-    TurnOffEditMod();
+
+    _TextField->clear();
+    ui->pushButtonEditingCancel->setVisible(false);
+    ui->pushButtonSendApply->setVisible(false);
+    ui->pushButtonSend->setVisible(true);
+    ui->pushButtonSendFIle->setVisible(true);
 }
 

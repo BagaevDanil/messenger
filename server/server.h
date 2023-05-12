@@ -12,6 +12,11 @@ class TServer: public QTcpServer
     Q_OBJECT
 
 public:
+    static const int SIZE_PACK;
+    static const int TIME_PAUSE_BEFORE_DOWNLOAD;
+    static const int BYTE_DOWNLOAD_PACK_SIZE;
+
+public:
     TServer();
     ~TServer();
     bool StartServer();
@@ -35,13 +40,14 @@ public:
 
 private:
      QTcpSocket* _Socket;
+     QSet<QTcpSocket*> _AllSocket;
      QSet<QTcpSocket*> _ArrSocket;
      QByteArray _Data;
-     QVector<TMessageData> _ArrMessage;
-     QVector<TFile> _ArrFile;
+     QVector<TMessageData*> _ArrMessage;
+     QVector<TFile*> _ArrFile;
      QSqlDatabase _DB;
      QMap<int, DataDownloadFileUser> _MapDownloadData;
-     int _CurInd;
+     int _CurIndMsg;
      int _CurIndFiles;
 
 private:
@@ -59,12 +65,13 @@ private:
      void SendFileToClient(QTcpSocket* socket, int fileId);
      ETypeAnsRegistration UserRegistration(QString login, QString pass);
      bool CheckingLoginAvailability(QString login);
-     void SaveMsgToDB(TMessageData msg);
+     void SaveMsgToDB(TMessageData* msg);
      void LoadMsgFromDB();
-     void SaveFileToDB(TFile file);
+     void SaveFileToDB(TFile* file);
      void LoadFileFromDB();
+     void UpdateMsgToDB(TEditMessageInfo* msg);
 
-public slots:  
+public slots:
     void incomingConnection(qintptr socketDescriptor);
     void SlotReadyRead();
     void SlotSocketDisc();

@@ -13,6 +13,7 @@ enum ETypeAction {
     DOWNLOAD_FROM_CLIENT,
     DOWNLOAD_FROM_SERVER,
     SUBSCRIBE_TO_MESSAGES,
+    EDIT_MESSAGE,
 };
 
 enum ETypeAnsRegistration {
@@ -24,6 +25,18 @@ enum ETypeAnsRegistration {
 namespace HOST {
     const QString ADDRES = "127.0.0.1";
     const int PORT = 1234;
+};
+
+struct TEditMessageInfo {
+    QString NewText;
+    int MsgId;
+
+public:
+    TEditMessageInfo();
+    TEditMessageInfo(QString newText, int msgId);
+
+    friend QDataStream& operator>> (QDataStream& in, TEditMessageInfo& msg);
+    friend QDataStream& operator<< (QDataStream& out, TEditMessageInfo& msg);
 };
 
 struct TUserInfo {
@@ -59,7 +72,7 @@ struct TMessageData {
     };
 
     TMessageData();
-    TMessageData(QString login, QString text, QString time, ETypeMessage type, int ind = 0);
+    TMessageData(QString login, QString text, QString time, ETypeMessage type, bool isEditing, int ind = 0);
 
     QString Login;
     QString Text;
@@ -67,6 +80,7 @@ struct TMessageData {
     ETypeMessage Type;
     int FileId;
     int Ind;
+    bool IsEditing;
 
     friend QDataStream& operator>> (QDataStream& in, TMessageData& msg);
     friend QDataStream& operator<< (QDataStream &out, TMessageData &msg);

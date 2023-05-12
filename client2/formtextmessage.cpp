@@ -4,19 +4,17 @@
 #include <QScrollBar>
 #include <QSpacerItem>
 
-const int TTextMessage::TIME_PAUSE_UPDATE_SIZE_TEXT = 2;
-
-TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent)
-    : TFormMessage(msg.Ind)
-    , ui(new Ui::TTextMessage)
+TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, QWidget *parent)
+    : ui(new Ui::TTextMessage)
 {
     ui->setupUi(this);
 
     ui->labelLogin->setText(msg.Login);
     ui->labelTime->setText(msg.Time);
+    _MsgId = msg.Ind;
 
     ui->textEdit->setText(msg.Text);
-    QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TTextMessage::onTextChanged);
+    QTimer::singleShot(2, this, &TTextMessage::onTextChanged);
     connect(ui->pushButtonEditing, SIGNAL(clicked()), this, SLOT(PushButtonEdit()));
 
     ui->horizontalLayout->removeItem(ui->horizontalSpacer);
@@ -28,24 +26,11 @@ TTextMessage::TTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidg
         ui->horizontalLayout->addSpacerItem(ui->horizontalSpacer);
         ui->pushButtonEditing->setVisible(false);
     }
-
-    if (isEditing) {
-        ui->labelEditMark->setVisible(true);
-    }
-    else {
-        ui->labelEditMark->setVisible(false);
-    }
 }
 
 void TTextMessage::SetText(QString text)
 {
     ui->textEdit->setText(text);
-    QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TTextMessage::onTextChanged);
-}
-
-void TTextMessage::SetEditMark(bool val)
-{
-    ui->labelEditMark->setVisible(val);
 }
 
 void TTextMessage::PushButtonEdit()

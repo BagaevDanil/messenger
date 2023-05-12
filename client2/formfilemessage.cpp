@@ -5,8 +5,7 @@
 const int TFormFileMessage::TIME_PAUSE_FINISH_DOWNLOAD = 1000;
 
 TFormFileMessage::TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *parent)
-    : TFormMessage(msg.Ind)
-    , ui(new Ui::TFormFileMessage)
+    : ui(new Ui::TFormFileMessage)
 {
     ui->setupUi(this);
 
@@ -14,6 +13,7 @@ TFormFileMessage::TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *pare
     ui->labelTime->setText(msg.Time);
     ui->pushButton->setText(msg.Text);
     ui->progressBar->setVisible(false);
+    _MsgId = msg.Ind;
     _FileID = msg.FileId;
     _FileName = msg.Text;
     connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(PushButton()));
