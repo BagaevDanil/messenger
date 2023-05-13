@@ -121,6 +121,7 @@ void TChatWindow::ChangeVericalScroll(int value)
     else {
         ui->pushButtonToBottom->setVisible(false);
     }
+    emit ChengeFieldView(value, ui->scrollArea->height());
 }
 
 void TChatWindow::GetHistoryPack()
@@ -269,6 +270,14 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
         _Layout->insertWidget(1, msgForm);
     }
     _MapMsg[msg.Ind] = msgForm;
+    connect(this, SIGNAL(ChengeFieldView(int, int)), msgForm, SLOT(CheckFieldOfView(int, int)));
+    connect(msgForm, SIGNAL(ChangeViewStatus(int)), this, SLOT(ChangeViewStatusSlot(int)));
+}
+
+void TChatWindow::ChangeViewStatusSlot(int id)
+{
+    qDebug() << "-Change View Status Slot :" << id;
+    SendDataToServer(id, ETypeAction::VIEWED_MESSAGE);
 }
 
 void TChatWindow::DownloaIterations()
@@ -427,7 +436,7 @@ void TChatWindow::TextFieldPress()
     }
 
     if (HostExists()) {
-        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT, false);
+        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT, false, false);
         _TextField->clear();
         SendDataToServer(msg, ETypeAction::MESSAGE);
     }

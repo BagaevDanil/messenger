@@ -7,10 +7,11 @@
 const int TFormTextMessage::TIME_PAUSE_UPDATE_SIZE_TEXT = 2;
 
 TFormTextMessage::TFormTextMessage(TMessageData msg, bool isMyMsg, bool isEditing, QWidget *parent)
-    : TFormMessage(msg.Ind)
+    : TFormMessage(msg.Ind, msg.IsViewed, parent)
     , ui(new Ui::TTextMessage)
 {
     ui->setupUi(this);
+    _Label = ui->viewWidget;
 
     ui->labelLogin->setText(msg.Login);
     ui->labelTime->setText(msg.Time);
@@ -35,6 +36,13 @@ TFormTextMessage::TFormTextMessage(TMessageData msg, bool isMyMsg, bool isEditin
     else {
         ui->labelEditMark->setVisible(false);
     }
+
+    if (_IsViewed) {
+        _Label->setVisible(false);
+    }
+    else {
+        _Label->setVisible(true);
+    }
 }
 
 void TFormTextMessage::SetText(QString text)
@@ -50,7 +58,6 @@ void TFormTextMessage::SetEditMark(bool val)
 
 void TFormTextMessage::PushButtonEdit()
 {
-    //qDebug() << "-Push EditButton";
     emit EditingMsg(_MsgId, ui->textEdit->toPlainText());
 }
 
@@ -66,3 +73,11 @@ TFormTextMessage::~TFormTextMessage()
 {
     delete ui;
 }
+
+/*void TFormTextMessage::CheckFieldOfView(int posY, int filedHeight)
+{
+    auto& rect = geometry();
+    if (rect.y() <= posY + filedHeight && posY <= rect.y() + rect.height()) {
+        qDebug() << "*Check Field Of View : " << filedHeight << posY << ui->textEdit->toPlainText();
+    }
+}*/

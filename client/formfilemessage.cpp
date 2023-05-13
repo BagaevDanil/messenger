@@ -5,10 +5,11 @@
 const int TFormFileMessage::TIME_PAUSE_FINISH_DOWNLOAD = 1000;
 
 TFormFileMessage::TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *parent)
-    : TFormMessage(msg.Ind)
+    : TFormMessage(msg.Ind, msg.IsViewed, parent)
     , ui(new Ui::TFormFileMessage)
 {
     ui->setupUi(this);
+    _Label = ui->labelLogin;
 
     ui->labelLogin->setText(msg.Login);
     ui->labelTime->setText(msg.Time);

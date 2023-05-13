@@ -93,7 +93,11 @@ public slots:
     void GetHistoryPack();
     void SetShiftHistory(int h);
     void ChangeVericalScroll(int x);
+    void ChangeViewStatusSlot(int id);
     void SlotEditingMsg(int msgId, QString text);
+
+signals:
+    void ChengeFieldView(int posY, int filedHeight);
 
 };
 

@@ -36,9 +36,10 @@ bool TServer::StartServer()
         return false;
     }
     qDebug() << "-Connect to DB";
+
     /*QSqlQuery* query = new QSqlQuery(_DB);
     query->prepare(
-        "ALTER TABLE Messages ADD IsEditing BOOLEAN;"
+        "ALTER TABLE Messages ADD IsViewed BOOLEAN;"
     );
     bool result = query->exec();
     if (result) {
@@ -111,9 +112,9 @@ void TServer::SaveMsgToDB(TMessageData* msg)
     QSqlQuery* query = new QSqlQuery(_DB);
     query->prepare(
         "INSERT INTO Messages\
-            (Login, Text, Time, Ind, Type, IndFile, IsEditing)\
+            (Login, Text, Time, Ind, Type, IndFile, IsEditing, IsViewed)\
         VALUES\
-            (:login, :text, :time, :index, :type, :indFile, :isEditing)"
+            (:login, :text, :time, :index, :type, :indFile, :isEditing, :isViewed)"
     );
     query->bindValue(":login", msg->Login);
     query->bindValue(":text", msg->Text);
@@ -122,6 +123,7 @@ void TServer::SaveMsgToDB(TMessageData* msg)
     query->bindValue(":type", QString::number(int(msg->Type)));
     query->bindValue(":indFile", QString::number(int(msg->FileId)));
     query->bindValue(":isEditing", msg->IsEditing);
+    query->bindValue(":isViewed", msg->IsEditing);
     bool result = query->exec();
 
     if (result) {
@@ -157,6 +159,29 @@ void TServer::UpdateMsgToDB(TEditMessageInfo* msg)
     }
 }
 
+void TServer::UpdateViewMsgToDB(int idMsg)
+{
+    qDebug() << "   -Update View msg to DB:";
+    QSqlQuery* query = new QSqlQuery(_DB);
+    query->prepare(
+        "UPDATE\
+            Messages\
+         SET\
+            IsViewed = true\
+         WHERE\
+            Ind = :id;"
+    );
+    query->bindValue(":id", QString::number(idMsg));
+    bool result = query->exec();
+
+    if (result) {
+        qDebug() << "       Update : " << query->result() << idMsg;
+    }
+    else {
+        qDebug() << "       Error :" << query->lastError().text();
+    }
+}
+
 
 void TServer::LoadMsgFromDB()
 {
@@ -164,7 +189,7 @@ void TServer::LoadMsgFromDB()
     QSqlQuery* query = new QSqlQuery(_DB);
     query->exec(
         "SELECT\
-            Login, Text, Time, Ind, Type, IndFile, IsEditing\
+            Login, Text, Time, Ind, Type, IndFile, IsEditing, IsViewed\
          FROM\
             Messages"
     );
@@ -177,13 +202,14 @@ void TServer::LoadMsgFromDB()
         int ind = query->value(3).toString().toInt();
         int type = query->value(4).toString().toInt();
         int fileId = query->value(5).toString().toInt();
-        int isEditing = query->value(6).toBool();
+        bool isEditing = query->value(6).toBool();
+        bool isViewed = query->value(7).toBool();
         if (ind != _CurIndMsg) {
             throw std::logic_error("Error matching indexes in the DB");
         }
 
         qDebug() << "   msg:" << _CurIndMsg << login << text << time << type << fileId << isEditing;
-        auto* msg = new TMessageData(login, text, time, TMessageData::ETypeMessage(type), isEditing, _CurIndMsg++);
+        auto* msg = new TMessageData(login, text, time, TMessageData::ETypeMessage(type), isEditing, isViewed, _CurIndMsg++);
         msg->FileId = fileId;
         _ArrMessage.push_back(msg);
     }
@@ -305,6 +331,7 @@ void TServer::DownloaIterations(DataDownloadFileUser& userDownloadInfo, QTcpSock
         msg->FileId = file->Ind;
         msg->Ind = _CurIndMsg++;
         msg->IsEditing = false;
+        msg->IsViewed = false;
         _ArrMessage.push_back(msg);
         SaveMsgToDB(msg);
 
@@ -424,6 +451,14 @@ void TServer::SlotReadyRead()
         _ArrMessage[msg->MsgId]->IsEditing = true;
         UpdateMsgToDB(msg);
         SendDataToAllClients(*msg, ETypeAction::EDIT_MESSAGE);
+    }
+    else if (typeAction == ETypeAction::VIEWED_MESSAGE) {
+        int id;
+        input >> id;
+        qDebug() << "   Viewed message : " << id;
+        _ArrMessage[id]->IsViewed = true;
+        UpdateViewMsgToDB(id);
+        // SendDataToAllClients(id, ETypeAction::VIEWED_MESSAGE);
     }
     else {
         qDebug() << "  Error action";

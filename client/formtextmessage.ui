@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>350</width>
-    <height>189</height>
+    <height>199</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -183,6 +183,17 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
            </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="viewWidget">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="resources.qrc">
+              <normaloff>:/icons/icons/not_viewed.png</normaloff>:/icons/icons/not_viewed.png</iconset>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QLabel" name="labelEditMark">
