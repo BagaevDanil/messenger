@@ -18,19 +18,9 @@ TFormTextMessage::TFormTextMessage(TMessageData msg, bool isMyMsg, bool isEditin
     QTimer::singleShot(TIME_PAUSE_UPDATE_SIZE_TEXT, this, &TFormTextMessage::onTextChanged);
     connect(ui->pushButtonEditing, SIGNAL(clicked()), this, SLOT(PushButtonEdit()));
 
-    if (isMyMsg) {
-        ui->pushButtonEditing->setVisible(true);
-    }
-    else {
-        ui->pushButtonEditing->setVisible(false);
-    }
 
-    if (isEditing) {
-        ui->labelEditStatus->setVisible(true);
-    }
-    else {
-        ui->labelEditStatus->setVisible(false);
-    }
+    ui->pushButtonEditing->setVisible(isMyMsg);
+    ui->labelEditStatus->setVisible(isEditing);
 }
 
 void TFormTextMessage::SetText(QString text)
@@ -61,11 +51,3 @@ TFormTextMessage::~TFormTextMessage()
 {
     delete ui;
 }
-
-/*void TFormTextMessage::CheckFieldOfView(int posY, int filedHeight)
-{
-    auto& rect = geometry();
-    if (rect.y() <= posY + filedHeight && posY <= rect.y() + rect.height()) {
-        qDebug() << "*Check Field Of View : " << filedHeight << posY << ui->textEdit->toPlainText();
-    }
-}*/

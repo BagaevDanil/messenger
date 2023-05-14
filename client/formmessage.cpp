@@ -18,14 +18,8 @@ const int& TFormMessage::GetId() const
 void TFormMessage::SetupForm(TMessageData& msg, QWidget* viewWidget, QLabel* labelLogin, QLabel* labelTime, QBoxLayout* layout, bool isMyMsg)
 {
     _ViewWidget = viewWidget;
-    if (msg.IsViewed) {
-        _ViewWidget->setVisible(false);
-        _IsViewed = true;
-    }
-    else {
-        _ViewWidget->setVisible(true);
-        _IsViewed = false;
-    }
+    _IsViewed = msg.IsViewed;
+    _ViewWidget->setVisible(!_IsViewed);
 
     _MsgId = msg.Ind;
 
@@ -36,7 +30,8 @@ void TFormMessage::SetupForm(TMessageData& msg, QWidget* viewWidget, QLabel* lab
     _LabelTime->setText(msg.Time);
 
     auto* _Spacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Expanding);
-    if (isMyMsg) {
+    _IsMyMsg = isMyMsg;
+    if (_IsMyMsg) {
         layout->insertSpacerItem(0, _Spacer);
     }
     else {
@@ -46,13 +41,12 @@ void TFormMessage::SetupForm(TMessageData& msg, QWidget* viewWidget, QLabel* lab
 
 void TFormMessage::CheckFieldOfView(int posY, int filedHeight)
 {
-    if (_IsViewed) {
+    if (_IsMyMsg || _IsViewed) {
         return;
     }
 
     auto& rect = geometry();
     if (rect.y() <= posY + filedHeight && posY <= rect.y() + rect.height()) {
-        // qDebug() << "*Check Field Of View : " << filedHeight << posY;
 
         _IsViewed = true;
         emit ChangeViewStatus(_MsgId);

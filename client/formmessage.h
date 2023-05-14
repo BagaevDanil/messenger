@@ -29,6 +29,7 @@ protected:
     QWidget* _ViewWidget;
     QLabel* _LabelLogin;
     QLabel* _LabelTime;
+    bool _IsMyMsg;
 };
 
 #endif // TFORMMESSAGE_H
