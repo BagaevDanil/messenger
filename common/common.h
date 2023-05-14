@@ -14,6 +14,7 @@ enum ETypeAction {
     DOWNLOAD_FROM_SERVER,
     SUBSCRIBE_TO_MESSAGES,
     EDIT_MESSAGE,
+    VIEWED_MESSAGE,
 };
 
 enum ETypeAnsRegistration {
@@ -72,7 +73,7 @@ struct TMessageData {
     };
 
     TMessageData();
-    TMessageData(QString login, QString text, QString time, ETypeMessage type, bool isEditing, int ind = 0);
+    TMessageData(QString login, QString text, QString time, ETypeMessage type, bool isEditing, bool isViewed, int ind = 0);
 
     QString Login;
     QString Text;
@@ -81,6 +82,7 @@ struct TMessageData {
     int FileId;
     int Ind;
     bool IsEditing;
+    bool IsViewed;
 
     friend QDataStream& operator>> (QDataStream& in, TMessageData& msg);
     friend QDataStream& operator<< (QDataStream &out, TMessageData &msg);

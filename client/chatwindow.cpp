@@ -121,6 +121,7 @@ void TChatWindow::ChangeVericalScroll(int value)
     else {
         ui->pushButtonToBottom->setVisible(false);
     }
+    emit ChengeFieldView(value, ui->scrollArea->height());
 }
 
 void TChatWindow::GetHistoryPack()
@@ -269,6 +270,14 @@ void TChatWindow::AddNewMessage(TMessageData msg, bool toBottom)
         _Layout->insertWidget(1, msgForm);
     }
     _MapMsg[msg.Ind] = msgForm;
+    connect(this, SIGNAL(ChengeFieldView(int, int)), msgForm, SLOT(CheckFieldOfView(int, int)));
+    connect(msgForm, SIGNAL(ChangeViewStatus(int)), this, SLOT(ChangeViewStatusSlot(int)));
+}
+
+void TChatWindow::ChangeViewStatusSlot(int id)
+{
+    qDebug() << "-Change View Status Slot :" << id;
+    SendDataToServer(id, ETypeAction::VIEWED_MESSAGE);
 }
 
 void TChatWindow::DownloaIterations()
@@ -311,68 +320,76 @@ void TChatWindow::SlotReadyRead()
         return;
     }
 
-    int typeAction;
-    input >> typeAction;
-    if (typeAction == ETypeAction::MESSAGE) {
-        TMessageData msg;
-        input >> msg;
-        AddNewMessage(msg, true);
+    while (!input.atEnd()) {
+        int typeAction;
+        input >> typeAction;
+        if (typeAction == ETypeAction::MESSAGE) {
+            TMessageData msg;
+            input >> msg;
+            AddNewMessage(msg, true);
 
-        int maxH = ui->scrollArea->verticalScrollBar()->maximum();
-        int curH = ui->scrollArea->verticalScrollBar()->value();
-        if (maxH - curH < HEIGHT_AUTOMATIC_SCROLL_DOWN) {
-            QTimer::singleShot(TIME_AUTOMATIC_SCROLL_DOWN, this, &TChatWindow::on_pushButtonToBottom_clicked);
+            int maxH = ui->scrollArea->verticalScrollBar()->maximum();
+            int curH = ui->scrollArea->verticalScrollBar()->value();
+            if (maxH - curH < HEIGHT_AUTOMATIC_SCROLL_DOWN) {
+                QTimer::singleShot(TIME_AUTOMATIC_SCROLL_DOWN, this, &TChatWindow::on_pushButtonToBottom_clicked);
+            }
         }
-    }
-    else if (typeAction == ETypeAction::MESSAGE_HISTORY) {
-        TMessagePack msgPack;
-        input >> msgPack;
-        qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd<< "(ind)";
+        else if (typeAction == ETypeAction::MESSAGE_HISTORY) {
+            TMessagePack msgPack;
+            input >> msgPack;
+            qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd<< "(ind)";
 
-        for (const auto& msg : msgPack.ArrMessage) {
-            AddNewMessage(msg, false);
+            for (const auto& msg : msgPack.ArrMessage) {
+                AddNewMessage(msg, false);
+            }
+
+            if (_CurInd < 0) {
+                QTimer::singleShot(TIME_AUTOMATIC_SCROLL_HISTORY, this, &TChatWindow::on_pushButtonToBottom_clicked);
+            }
+            else {
+                int oldH = ui->scrollArea->verticalScrollBar()->maximum();
+                QTimer::singleShot(TIME_AUTOMATIC_SCROLL_HISTORY, this, [this, oldH](){
+                    SetShiftHistory(oldH);
+                });
+            }
+
+            _CurInd = msgPack.CurInd;
+            if (_CurInd > 0) {
+                _Button = new QPushButton("Раннее", this);
+                _Button->setStyleSheet(ui->pushButtonToBottom->styleSheet());
+                connect(_Button, SIGNAL(clicked()), this, SLOT(GetHistoryPack()));
+                _Layout->insertWidget(1, _Button);
+            }
         }
-
-        if (_CurInd < 0) {
-            QTimer::singleShot(TIME_AUTOMATIC_SCROLL_HISTORY, this, &TChatWindow::on_pushButtonToBottom_clicked);
+        else if (typeAction == ETypeAction::CHECK_CONNECTION) {
+            QByteArray buf = socket->readAll();
+            QString ans(buf);
+            qDebug() << "   Check connection : " << ans;
+        }
+        else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
+            _Downloading = true;
+            input >> _FileByteSize;
+            _DataDownload.clear();
+            _FormFile->StartDownload(_FileByteSize);
+            qDebug() << "   Start download: " << _FileByteSize;
+        }
+        else if (typeAction == ETypeAction::EDIT_MESSAGE) {
+            TEditMessageInfo msg;
+            input >> msg;
+            qDebug() << "   Edit message :" << msg.MsgId;
+            _MapMsg[msg.MsgId]->SetText(msg.NewText);
+            _MapMsg[msg.MsgId]->SetEditMark(true);
+        }
+        else if (typeAction == ETypeAction::VIEWED_MESSAGE) {
+            int id;
+            input >> id;
+            qDebug() << "   Viewed message : " << id;
+            _MapMsg[id]->SetView();
         }
         else {
-            int oldH = ui->scrollArea->verticalScrollBar()->maximum();
-            QTimer::singleShot(TIME_AUTOMATIC_SCROLL_HISTORY, this, [this, oldH](){
-                SetShiftHistory(oldH);
-            });
+            qDebug() << "  Error action";
+            QByteArray buf = _Socket->readAll();
         }
-
-        _CurInd = msgPack.CurInd;
-        if (_CurInd > 0) {
-            _Button = new QPushButton("Раннее", this);
-            _Button->setStyleSheet(ui->pushButtonToBottom->styleSheet());
-            connect(_Button, SIGNAL(clicked()), this, SLOT(GetHistoryPack()));
-            _Layout->insertWidget(1, _Button);
-        }
-    }
-    else if (typeAction == ETypeAction::CHECK_CONNECTION) {
-        QByteArray buf = socket->readAll();
-        QString ans(buf);
-        qDebug() << "   Check connection : " << ans;
-    }
-    else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
-        _Downloading = true;
-        input >> _FileByteSize;
-        _DataDownload.clear();
-        _FormFile->StartDownload(_FileByteSize);
-        qDebug() << "   Start download: " << _FileByteSize;
-    }
-    else if (typeAction == ETypeAction::EDIT_MESSAGE) {
-        TEditMessageInfo msg;
-        input >> msg;
-        qDebug() << "   Edit message :" << msg.MsgId;
-        _MapMsg[msg.MsgId]->SetText(msg.NewText);
-        _MapMsg[msg.MsgId]->SetEditMark(true);
-    }
-    else {
-        qDebug() << "  Error action";
-        QByteArray buf = _Socket->readAll();
     }
 }
 
@@ -427,7 +444,7 @@ void TChatWindow::TextFieldPress()
     }
 
     if (HostExists()) {
-        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT, false);
+        TMessageData msg(_UserLogin, _TextField->toPlainText(), "", TMessageData::ETypeMessage::TEXT, false, false);
         _TextField->clear();
         SendDataToServer(msg, ETypeAction::MESSAGE);
     }

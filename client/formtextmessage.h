@@ -27,6 +27,9 @@ public slots:
     void onTextChanged();
     void PushButtonEdit();
 
+/*public slots:
+    void CheckFieldOfView(int posY, int filedHeight);*/
+
 signals:
     void EditingMsg(int msgId, QString text);
 

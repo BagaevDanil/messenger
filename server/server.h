@@ -63,13 +63,17 @@ private:
      void SendMsgToClient(TMessageData msg, ETypeAction typeAction = MESSAGE);
      bool UserVerification(QString login, QString pass);
      void SendFileToClient(QTcpSocket* socket, int fileId);
+
      ETypeAnsRegistration UserRegistration(QString login, QString pass);
      bool CheckingLoginAvailability(QString login);
+
      void SaveMsgToDB(TMessageData* msg);
      void LoadMsgFromDB();
      void SaveFileToDB(TFile* file);
      void LoadFileFromDB();
      void UpdateMsgToDB(TEditMessageInfo* msg);
+     void UpdateViewMsgToDB(int idMsg);
+
 
 public slots:
     void incomingConnection(qintptr socketDescriptor);

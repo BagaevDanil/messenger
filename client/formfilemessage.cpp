@@ -5,60 +5,51 @@
 const int TFormFileMessage::TIME_PAUSE_FINISH_DOWNLOAD = 1000;
 
 TFormFileMessage::TFormFileMessage(TMessageData msg, bool isMyMsg, QWidget *parent)
-    : TFormMessage(msg.Ind)
+    : TFormMessage()
     , ui(new Ui::TFormFileMessage)
 {
     ui->setupUi(this);
+    TFormMessage::SetupForm(msg, ui->viewWidget, ui->labelLogin, ui->labelTime, ui->horizontalLayout, isMyMsg);
 
-    ui->labelLogin->setText(msg.Login);
-    ui->labelTime->setText(msg.Time);
-    ui->pushButton->setText(msg.Text);
-    ui->progressBar->setVisible(false);
+    ui->pushButtonDownload->setText(msg.Text);
+    ui->progressBarDownload->setVisible(false);
     _FileID = msg.FileId;
     _FileName = msg.Text;
-    connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(PushButton()));
-
-    ui->horizontalLayout->removeItem(ui->horizontalSpacer);
-    if (isMyMsg) {
-        ui->horizontalLayout->insertSpacerItem(0, ui->horizontalSpacer);
-    }
-    else {
-        ui->horizontalLayout->addSpacerItem(ui->horizontalSpacer);
-    }
+    connect(ui->pushButtonDownload, SIGNAL(clicked()), this, SLOT(PushButton()));
 }
 
 void TFormFileMessage::SetText(QString text)
 {
-    ui->pushButton->setText(text);
+    ui->pushButtonDownload->setText(text);
 }
 
 void TFormFileMessage::FinishDownload()
 {
-    ui->progressBar->setValue(ui->progressBar->maximum());
+    ui->progressBarDownload->setValue(ui->progressBarDownload->maximum());
     QTimer::singleShot(TIME_PAUSE_FINISH_DOWNLOAD, this, [this](){
-        ui->pushButton->setVisible(true);
-        ui->progressBar->setVisible(false);
+        ui->pushButtonDownload->setVisible(true);
+        ui->progressBarDownload->setVisible(false);
     });
 }
 
 void TFormFileMessage::UpdateDownload(int size)
 {
-    ui->progressBar->setValue(ui->progressBar->value() + size);
+    ui->progressBarDownload->setValue(ui->progressBarDownload->value() + size);
 }
 
 void TFormFileMessage::StartDownload(int fileSize)
 {
-    ui->pushButton->setVisible(false);
+    ui->pushButtonDownload->setVisible(false);
 
-    ui->progressBar->setVisible(true);
-    ui->progressBar->setMinimum(0);
-    ui->progressBar->setMaximum(fileSize);
-    ui->progressBar->setValue(0);
+    ui->progressBarDownload->setVisible(true);
+    ui->progressBarDownload->setMinimum(0);
+    ui->progressBarDownload->setMaximum(fileSize);
+    ui->progressBarDownload->setValue(0);
 }
 
 QProgressBar* TFormFileMessage::GetProgressBar()
 {
-    return ui->progressBar;
+    return ui->progressBarDownload;
 }
 
 const int& TFormFileMessage::GetFileID() const

@@ -88,6 +88,8 @@ QDataStream& operator>> (QDataStream &in, TMessageData &msg)
     msg.FileId = s.toInt();
     in >> s;
     msg.IsEditing = s.toInt();
+    in >> s;
+    msg.IsViewed = s.toInt();
 
     return in;
 }
@@ -101,19 +103,21 @@ QDataStream& operator<< (QDataStream &out, TMessageData &msg)
     out << QString::number(msg.Ind);
     out << QString::number(msg.FileId);
     out << QString::number(msg.IsEditing);
+    out << QString::number(msg.IsViewed);
     return out;
 }
 
 
 TMessageData::TMessageData(){}
 
-TMessageData::TMessageData(QString login, QString text, QString time, ETypeMessage type, bool isEditing, int ind)
+TMessageData::TMessageData(QString login, QString text, QString time, ETypeMessage type, bool isEditing, bool isViewed, int ind)
     : Login(login)
     , Text(text)
     , Time(time)
     , Type(type)
+    , Ind(ind)
     , IsEditing(isEditing)
-    , Ind(ind){}
+    , IsViewed(isViewed){}
 
 
 QDataStream& operator>> (QDataStream &in, TMessagePack &msgPack)

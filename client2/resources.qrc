@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>icons/icon_accept.png</file>
+        <file>icons/icon_cancel.png</file>
+        <file>icons/icon_edit.png</file>
+        <file>icons/icon_file.png</file>
+        <file>icons/icon_send.png</file>
+        <file>icons/icon_to_bottom.png</file>
+        <file>icons/not_viewed.png</file>
+    </qresource>
+</RCC>

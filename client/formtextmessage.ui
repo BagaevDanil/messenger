@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>350</width>
-    <height>189</height>
+    <height>199</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -41,20 +41,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QWidget" name="widget" native="true">
+      <widget class="QWidget" name="widgetMessage" native="true">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
          <horstretch>200</horstretch>
@@ -81,7 +68,7 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayoutMsg">
+         <layout class="QHBoxLayout" name="horizontalLayoutLabel">
           <item>
            <widget class="QLabel" name="labelLogin">
             <property name="minimumSize">
@@ -107,7 +94,7 @@
            </widget>
           </item>
           <item>
-           <spacer name="horizontalSpacer_2">
+           <spacer name="horizontalSpaceLabelMid">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -170,9 +157,9 @@ p, li { white-space: pre-wrap; }
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <layout class="QHBoxLayout" name="horizontalLayoutBottom">
           <item>
-           <spacer name="horizontalSpacer_3">
+           <spacer name="horizontalSpacerBottomLeft">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -185,7 +172,18 @@ p, li { white-space: pre-wrap; }
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="labelEditMark">
+           <widget class="QPushButton" name="viewWidget">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="resources.qrc">
+              <normaloff>:/icons/icons/not_viewed.png</normaloff>:/icons/icons/not_viewed.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="labelEditStatus">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
               <horstretch>0</horstretch>
