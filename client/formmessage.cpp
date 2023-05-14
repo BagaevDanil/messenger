@@ -39,6 +39,14 @@ void TFormMessage::SetupForm(TMessageData& msg, QWidget* viewWidget, QLabel* lab
     }
 }
 
+void TFormMessage::SetView()
+{
+    _IsViewed = true;
+    QTimer::singleShot(1200, [this] {
+        _ViewWidget->setVisible(false);
+    });
+}
+
 void TFormMessage::CheckFieldOfView(int posY, int filedHeight)
 {
     if (_IsMyMsg || _IsViewed) {
@@ -47,11 +55,7 @@ void TFormMessage::CheckFieldOfView(int posY, int filedHeight)
 
     auto& rect = geometry();
     if (rect.y() <= posY + filedHeight && posY <= rect.y() + rect.height()) {
-
         _IsViewed = true;
         emit ChangeViewStatus(_MsgId);
-        QTimer::singleShot(1200, [this] {
-            _ViewWidget->setVisible(false);
-        });
     }
 }

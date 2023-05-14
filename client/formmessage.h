@@ -16,6 +16,7 @@ public:
     virtual void SetEditMark(bool val);
     const int& GetId() const;
     void SetupForm(TMessageData& msg, QWidget* viewWidget, QLabel* labelLogin, QLabel* labelTime, QBoxLayout* layout, bool isMyMsg);
+    void SetView();
 
 public slots:
     void CheckFieldOfView(int posY, int filedHeight);

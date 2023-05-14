@@ -359,110 +359,111 @@ void TServer::SlotReadyRead()
         DownloaIterations(userDownloadInfo, _Socket);
         return;
     }
+    while (!input.atEnd()) {
+        int typeAction;
+        input >> typeAction;
 
-    int typeAction;
-    input >> typeAction;
+        if (typeAction == ETypeAction::AUTHORIZATION) {
+            TUserInfo user;
+            input >> user;
+            qDebug() << "   Log in : " << user.Login << " | " << user.Password;
 
-    if (typeAction == ETypeAction::AUTHORIZATION) {
-        TUserInfo user;
-        input >> user;
-        qDebug() << "   Log in : " << user.Login << " | " << user.Password;
-
-        if (!UserVerification(user.Login, user.Password)) {
-            SendDataToClient(QString(""), ETypeAction::AUTHORIZATION, _Socket);
-            return;
+            if (!UserVerification(user.Login, user.Password)) {
+                SendDataToClient(QString(""), ETypeAction::AUTHORIZATION, _Socket);
+                return;
+            }
+            SendDataToClient(user.Login, ETypeAction::AUTHORIZATION, _Socket);
         }
-        SendDataToClient(user.Login, ETypeAction::AUTHORIZATION, _Socket);
-    }
-    else if (typeAction == ETypeAction::MESSAGE) {
-        auto* msg = new TMessageData;
-        input >> *msg;
-        msg->Time = QTime::currentTime().toString("hh:mm:ss");
-        msg->Type = TMessageData::ETypeMessage::TEXT;
-        msg->Ind = _CurIndMsg++;
-        _ArrMessage.push_back(msg);
-        SaveMsgToDB(msg);
+        else if (typeAction == ETypeAction::MESSAGE) {
+            auto* msg = new TMessageData;
+            input >> *msg;
+            msg->Time = QTime::currentTime().toString("hh:mm:ss");
+            msg->Type = TMessageData::ETypeMessage::TEXT;
+            msg->Ind = _CurIndMsg++;
+            _ArrMessage.push_back(msg);
+            SaveMsgToDB(msg);
 
-        qDebug() << "   Msg (" << msg->Login << ") : " << msg->Text << " | " << msg->Time;
-        SendDataToAllClients(*msg, ETypeAction::MESSAGE);
-    }
-    else if (typeAction == ETypeAction::CHECK_CONNECTION) {
-        qDebug() << "   Check connection : " << "200ok";
-        //QString msg = "200ok";
-        //SendToClient(msg, ETypeAction::CHECK_CONNECTION);
-    }
-    else if (typeAction == ETypeAction::MESSAGE_HISTORY) {
-        int ind;
-        input >> ind;
-
-        if (ind < 0) {
-            ind = _ArrMessage.size();
+            qDebug() << "   Msg (" << msg->Login << ") : " << msg->Text << " | " << msg->Time;
+            SendDataToAllClients(*msg, ETypeAction::MESSAGE);
         }
-
-        TMessagePack msgPack;
-        msgPack.SizePack = std::min(ind, SIZE_PACK);
-        msgPack.CurInd = ind - msgPack.SizePack;
-        for (int i = ind - 1; i >= ind - msgPack.SizePack; --i) {
-            msgPack.ArrMessage.push_back(*_ArrMessage[i]);
+        else if (typeAction == ETypeAction::CHECK_CONNECTION) {
+            qDebug() << "   Check connection : " << "200ok";
+            //QString msg = "200ok";
+            //SendToClient(msg, ETypeAction::CHECK_CONNECTION);
         }
+        else if (typeAction == ETypeAction::MESSAGE_HISTORY) {
+            int ind;
+            input >> ind;
 
-        qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd << "(ind)";
-        SendDataToClient(msgPack, ETypeAction::MESSAGE_HISTORY, _Socket);
-    }
-    else if (typeAction == ETypeAction::DOWNLOAD_FROM_CLIENT) {
-        userDownloadInfo.Downloading = true;
-        TDownloadFileIndo info;
-        input >> info;
+            if (ind < 0) {
+                ind = _ArrMessage.size();
+            }
 
-        userDownloadInfo.UserLogin = info.Login;
-        userDownloadInfo.FileNameDownload = info.FileName;
-        userDownloadInfo.FileByteSize = info.FileSize;
-        userDownloadInfo.DataDownload.clear();
-        qDebug() << "   Start download : " << userDownloadInfo.FileByteSize;
-    }
-    else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
-        int fileId;
-        input >> fileId;
-        qDebug() << "   Send file to clietn : " << fileId;
-        SendFileToClient(_Socket, fileId);
-    }
-    else if (typeAction == ETypeAction::REGISTRATION) {
-        TUserInfo user;
-        input >> user;
-        qDebug() << "   New user : " << user.Login << " | " << user.Password;
+            TMessagePack msgPack;
+            msgPack.SizePack = std::min(ind, SIZE_PACK);
+            msgPack.CurInd = ind - msgPack.SizePack;
+            for (int i = ind - 1; i >= ind - msgPack.SizePack; --i) {
+                msgPack.ArrMessage.push_back(*_ArrMessage[i]);
+            }
 
-        auto ansReg = UserRegistration(user.Login, user.Password);
-        if (ansReg != ETypeAnsRegistration::OK) {
-            qDebug() << "   Error add new user";
+            qDebug() << "   Pack history : " << msgPack.SizePack << "(size) | " << msgPack.CurInd << "(ind)";
+            SendDataToClient(msgPack, ETypeAction::MESSAGE_HISTORY, _Socket);
         }
-        SendDataToClient(ansReg, ETypeAction::REGISTRATION, _Socket);
-    }
-    else if (typeAction == ETypeAction::SUBSCRIBE_TO_MESSAGES) {
-        QString ans;
-        input >> ans;
-        qDebug() << "  Subscribe to message : " << _Socket->socketDescriptor();
-        _ArrSocket.insert(_Socket);
-    }
-    else if (typeAction == ETypeAction::EDIT_MESSAGE) {
-        auto* msg = new TEditMessageInfo();
-        input >> *msg;
-        qDebug() << "   Edit message : " << msg->MsgId << msg->NewText;
-        _ArrMessage[msg->MsgId]->Text = msg->NewText;
-        _ArrMessage[msg->MsgId]->IsEditing = true;
-        UpdateMsgToDB(msg);
-        SendDataToAllClients(*msg, ETypeAction::EDIT_MESSAGE);
-    }
-    else if (typeAction == ETypeAction::VIEWED_MESSAGE) {
-        int id;
-        input >> id;
-        qDebug() << "   Viewed message : " << id;
-        _ArrMessage[id]->IsViewed = true;
-        UpdateViewMsgToDB(id);
-        // SendDataToAllClients(id, ETypeAction::VIEWED_MESSAGE);
-    }
-    else {
-        qDebug() << "  Error action";
-        QByteArray buf = _Socket->readAll();
+        else if (typeAction == ETypeAction::DOWNLOAD_FROM_CLIENT) {
+            userDownloadInfo.Downloading = true;
+            TDownloadFileIndo info;
+            input >> info;
+
+            userDownloadInfo.UserLogin = info.Login;
+            userDownloadInfo.FileNameDownload = info.FileName;
+            userDownloadInfo.FileByteSize = info.FileSize;
+            userDownloadInfo.DataDownload.clear();
+            qDebug() << "   Start download : " << userDownloadInfo.FileByteSize;
+        }
+        else if (typeAction == ETypeAction::DOWNLOAD_FROM_SERVER) {
+            int fileId;
+            input >> fileId;
+            qDebug() << "   Send file to clietn : " << fileId;
+            SendFileToClient(_Socket, fileId);
+        }
+        else if (typeAction == ETypeAction::REGISTRATION) {
+            TUserInfo user;
+            input >> user;
+            qDebug() << "   New user : " << user.Login << " | " << user.Password;
+
+            auto ansReg = UserRegistration(user.Login, user.Password);
+            if (ansReg != ETypeAnsRegistration::OK) {
+                qDebug() << "   Error add new user";
+            }
+            SendDataToClient(ansReg, ETypeAction::REGISTRATION, _Socket);
+        }
+        else if (typeAction == ETypeAction::SUBSCRIBE_TO_MESSAGES) {
+            QString ans;
+            input >> ans;
+            qDebug() << "  Subscribe to message : " << _Socket->socketDescriptor();
+            _ArrSocket.insert(_Socket);
+        }
+        else if (typeAction == ETypeAction::EDIT_MESSAGE) {
+            auto* msg = new TEditMessageInfo();
+            input >> *msg;
+            qDebug() << "   Edit message : " << msg->MsgId << msg->NewText;
+            _ArrMessage[msg->MsgId]->Text = msg->NewText;
+            _ArrMessage[msg->MsgId]->IsEditing = true;
+            UpdateMsgToDB(msg);
+            SendDataToAllClients(*msg, ETypeAction::EDIT_MESSAGE);
+        }
+        else if (typeAction == ETypeAction::VIEWED_MESSAGE) {
+            int id;
+            input >> id;
+            qDebug() << "   Viewed message : " << id;
+            _ArrMessage[id]->IsViewed = true;
+            UpdateViewMsgToDB(id);
+            SendDataToAllClients(id, ETypeAction::VIEWED_MESSAGE);
+        }
+        else {
+            qDebug() << "  Error action";
+            QByteArray buf = _Socket->readAll();
+        }
     }
 }
 
@@ -474,7 +475,7 @@ void TServer::SendFileToClient(QTcpSocket* socket, int fileId)
 
     SendDataToClient(int(byteArray.size()), ETypeAction::DOWNLOAD_FROM_SERVER, socket);
 
-    QTimer::singleShot(TIME_PAUSE_BEFORE_DOWNLOAD, this, [this, byteArray, socket](){
+    QTimer::singleShot(TIME_PAUSE_BEFORE_DOWNLOAD, this, [byteArray, socket](){
         int readyByte;
         for (readyByte = 0; readyByte < byteArray.size(); readyByte += BYTE_DOWNLOAD_PACK_SIZE) {
             socket->write(byteArray.mid(readyByte, BYTE_DOWNLOAD_PACK_SIZE));
