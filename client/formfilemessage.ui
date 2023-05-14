@@ -94,40 +94,6 @@
             </property>
            </spacer>
           </item>
-          <item>
-           <widget class="QPushButton" name="pushButtonEditing">
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-    border: none;
-    border-radius: 12px; /* радиус скругления */
-    padding: 6px 12px; /* отступ текста от края кнопки */
-    background-color: #007fff;
-    color: white;
-}
-
-QPushButton:hover {
-    background-color: #006acc;
-}
-
-QPushButton:pressed {
-    background-color: #0058a0;
-}</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset resource="resources.qrc">
-              <normaloff>:/icons/icons/icon_edit.png</normaloff>:/icons/icons/icon_edit.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>14</width>
-              <height>14</height>
-             </size>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
         <item>
@@ -201,39 +167,6 @@ QPushButton:pressed {
             <property name="icon">
              <iconset resource="resources.qrc">
               <normaloff>:/icons/icons/not_viewed.png</normaloff>:/icons/icons/not_viewed.png</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="labelEditStatus">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>7</pointsize>
-             </font>
-            </property>
-            <property name="contextMenuPolicy">
-             <enum>Qt::NoContextMenu</enum>
-            </property>
-            <property name="text">
-             <string>(ред.)</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-            <property name="margin">
-             <number>0</number>
             </property>
            </widget>
           </item>
